@@ -1,13 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
+
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
     };
+    
+    // Suppress Handlebars webpack warnings
+    config.ignoreWarnings = [
+      /require\.extensions is not supported by webpack/,
+    ];
+    
     return config;
   },
 }

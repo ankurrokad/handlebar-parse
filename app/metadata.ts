@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://handlebar-parser.vercel.app'),
   title: 'HBS Parser - Real-time Handlebars Template Editor',
   description: 'A modern, real-time Handlebars template editor with live preview. Edit your templates and see the results instantly.',
   keywords: ['handlebars', 'template editor', 'live preview', 'hbs', 'template parser', 'development tools'],
@@ -16,6 +17,4 @@ export const metadata: Metadata = {
     title: 'HBS Parser - Real-time Handlebars Template Editor',
     description: 'A modern, real-time Handlebars template editor with live preview',
   },
-  viewport: 'width=device-width, initial-scale=1',
-  themeColor: '#000000',
 }

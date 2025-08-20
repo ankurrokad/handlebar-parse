@@ -9,22 +9,29 @@ const Card = React.forwardRef<
     animate?: boolean 
   }
 >(({ className, glassmorphic = false, animate = true, ...props }, ref) => {
-  const Component = animate ? motion.div : "div"
-  const motionProps = animate ? {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.3, ease: "easeOut" }
-  } : {}
+  const baseClassName = cn(
+    "rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl",
+    glassmorphic && "bg-white/5 backdrop-blur-xl border-white/10",
+    className
+  )
+
+  if (animate) {
+    return (
+      <motion.div
+        ref={ref}
+        className={baseClassName}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        {...(props as any)}
+      />
+    )
+  }
 
   return (
-    <Component
+    <div
       ref={ref}
-      className={cn(
-        "rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl",
-        glassmorphic && "bg-white/5 backdrop-blur-xl border-white/10",
-        className
-      )}
-      {...motionProps}
+      className={baseClassName}
       {...props}
     />
   )

@@ -1,149 +1,171 @@
-# HBS Parser - Real-time Handlebars Template Preview
+# HBS Parser - Real-time Handlebars Template Editor
 
-A developer-friendly web application for parsing and previewing Handlebars templates in real-time. Built with Next.js, Monaco Editor (VSCode-like), and Handlebars.
+A modern, developer-friendly web application for creating, editing, and previewing Handlebars templates in real-time. Built with Next.js, featuring a VS Code-like editor experience with live preview and export capabilities.
 
 ## ✨ Features
 
-- **Real-time Preview**: See your Handlebars templates rendered instantly as you type
-- **VSCode-like Editor**: Monaco Editor with syntax highlighting, autocomplete, and IntelliSense
-- **Dual-panel Layout**: 50/50 split between template/data editing and HTML preview
-- **Tabbed Interface**: Switch between template (.hbs) and data (JSON) editing
-- **Auto-compilation**: Real-time template compilation with error handling
-- **Custom Helpers**: Built-in Handlebars helpers (formatDate, eq, gt, lt)
-- **File Import/Export**: Import template and data files, export compiled HTML
-- **Auto-play Toggle**: Control when templates are compiled
-- **Responsive Design**: Works on desktop and mobile devices
+- **Real-time Preview**: See your Handlebars templates render instantly as you type
+- **VS Code-like Editor**: Monaco Editor with syntax highlighting, autocomplete, and dark/light themes
+- **Dual Panel Layout**: Edit templates and data side-by-side with live compilation
+- **Smart Tabs**: Switch between template (.hbs) and data (.json) editing
+- **Theme Toggle**: Seamless switching between dark and light themes
+- **Copy to Clipboard**: One-click HTML copying for easy sharing
+- **Auto-play Mode**: Toggle real-time compilation on/off
+- **Import Support**: Load existing .hbs, .html, .json, and .txt files
+- **Custom Helpers**: Built-in Handlebars helpers for common operations
+- **Responsive Design**: Optimized for maximum screen real estate
+- **Production Ready**: Error boundaries, loading states, and PWA support
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-
 - Node.js 18+ 
-- npm or yarn
+- pnpm (recommended) or npm
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
    git clone <your-repo-url>
-   cd hbs-parser-app
+   cd hbs-parser
    ```
 
 2. **Install dependencies**
    ```bash
-   npm install
-   # or
-   yarn install
+   pnpm install
    ```
 
 3. **Run the development server**
    ```bash
-   npm run dev
-   # or
-   yarn dev
+   pnpm dev
    ```
 
 4. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-## 🎯 Usage
+### Build for Production
 
-### Template Editor
-- Write Handlebars templates using standard syntax
-- Supports all Handlebars features: variables, helpers, partials, blocks
-- Syntax highlighting and autocomplete for better development experience
-
-### Data Editor
-- Input JSON data that will be used to populate your templates
-- Automatic JSON validation and formatting
-- Real-time error checking
-
-### HTML Preview
-- See your compiled HTML rendered in real-time
-- Error messages displayed when compilation fails
-- Export functionality to download the final HTML
-
-### Custom Helpers
-The app includes several built-in Handlebars helpers:
-
-```handlebars
-{{formatDate date}}           <!-- Format dates -->
-{{#if (eq value1 value2)}}   <!-- Equality check -->
-{{#if (gt value1 value2)}}   <!-- Greater than -->
-{{#if (lt value1 value2)}}   <!-- Less than -->
+```bash
+pnpm build
+pnpm start
 ```
 
-## 🛠️ Built With
+## 🎯 Usage
 
-- **[Next.js 14](https://nextjs.org/)** - React framework with App Router
-- **[Monaco Editor](https://microsoft.github.io/monaco-editor/)** - VSCode-like code editor
-- **[Handlebars](https://handlebarsjs.com/)** - Template engine
-- **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first CSS framework
-- **[Lucide React](https://lucide.dev/)** - Beautiful icons
-- **[TypeScript](https://www.typescriptlang.org/)** - Type safety
+### Basic Workflow
+
+1. **Edit Template**: Write your Handlebars template in the left panel
+2. **Input Data**: Add your JSON data in the data tab
+3. **Live Preview**: See the rendered HTML in real-time on the right
+4. **Export**: Copy HTML to clipboard or download as needed
+
+### Handlebars Features Supported
+
+- **Basic Syntax**: `{{variable}}`, `{{#if}}`, `{{#each}}`
+- **Custom Helpers**: 
+  - `{{formatDate date}}` - Format dates
+  - `{{eq a b}}` - Equality comparison
+  - `{{gt a b}}` - Greater than comparison
+  - `{{lt a b}}` - Less than comparison
+
+### Keyboard Shortcuts
+
+- **Tab Switching**: Click between template and data tabs
+- **Theme Toggle**: Click the sun/moon icon
+- **Auto-play**: Toggle the play/stop button
+- **Copy HTML**: Use the copy button for instant clipboard access
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS with custom design system
+- **Editor**: Monaco Editor (VS Code's editor engine)
+- **Animations**: Framer Motion
+- **UI Components**: Radix UI primitives with shadcn/ui
+- **Templating**: Handlebars.js
+- **Build Tool**: pnpm
+
+## 🎨 Design Features
+
+- **Glassmorphic UI**: Modern, translucent interface elements
+- **Smooth Animations**: 60fps transitions and micro-interactions
+- **Dark Theme**: Professional dark theme optimized for developers
+- **Responsive Layout**: Maximizes screen space for editing
+- **VS Code Aesthetics**: Familiar tab design and color scheme
 
 ## 📁 Project Structure
 
 ```
-hbs-parser-app/
-├── app/                    # Next.js App Router
+hbs-parser/
+├── app/                    # Next.js app directory
 │   ├── globals.css        # Global styles and Tailwind
-│   ├── layout.tsx         # Root layout component
-│   └── page.tsx           # Main application page
-├── public/                 # Static assets
-├── package.json           # Dependencies and scripts
-├── tailwind.config.js     # Tailwind configuration
-├── tsconfig.json          # TypeScript configuration
-└── README.md              # This file
+│   ├── layout.tsx         # Root layout with providers
+│   ├── page.tsx           # Main application page
+│   ├── metadata.ts        # SEO and app metadata
+│   └── manifest.ts        # PWA manifest
+├── components/            # React components
+│   ├── ui/               # Reusable UI components
+│   ├── error-boundary.tsx # Error handling
+│   ├── loading.tsx       # Loading states
+│   └── providers.tsx     # App providers
+├── lib/                  # Utility functions
+│   └── utils.ts          # Common utilities
+└── types/                # TypeScript declarations
 ```
 
 ## 🔧 Configuration
 
-### Tailwind CSS
-Custom colors and fonts are configured in `tailwind.config.js` to match the VSCode-like theme.
+### Environment Variables
 
-### Monaco Editor
-The editor is configured with:
-- Dark theme (`vs-dark`)
-- Disabled minimap for cleaner interface
-- Autocomplete and IntelliSense enabled
-- Word wrap and automatic layout
+No environment variables required for basic functionality.
+
+### Customization
+
+- **Themes**: Modify colors in `tailwind.config.js`
+- **Helpers**: Add custom Handlebars helpers in `app/page.tsx`
+- **Styling**: Update `app/globals.css` for custom CSS
 
 ## 🚀 Deployment
 
-### Build for Production
-```bash
-npm run build
-npm start
-```
+### Vercel (Recommended)
 
-### Deploy to Vercel
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Deploy automatically on every push
+1. Push to GitHub
+2. Connect repository to Vercel
+3. Deploy automatically
+
+### Other Platforms
+
+- **Netlify**: Compatible with Next.js
+- **Railway**: Easy deployment with database support
+- **Docker**: Containerized deployment
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-## 📝 License
+## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see LICENSE file for details
 
 ## 🙏 Acknowledgments
 
-- [Monaco Editor](https://microsoft.github.io/monaco-editor/) for the excellent code editing experience
-- [Handlebars](https://handlebarsjs.com/) for the powerful templating engine
-- [Tailwind CSS](https://tailwindcss.com/) for the beautiful utility-first CSS framework
+- **Monaco Editor** - VS Code's editor engine
+- **Handlebars.js** - Powerful templating engine
+- **Framer Motion** - Smooth animations
+- **Tailwind CSS** - Utility-first CSS framework
+- **Next.js Team** - Amazing React framework
 
 ## 📞 Support
 
-If you have any questions or need help, please open an issue on GitHub or contact the maintainers.
+- **Issues**: Create GitHub issues for bugs
+- **Discussions**: Use GitHub discussions for questions
+- **Email**: Contact maintainers directly
 
 ---
 
-**Happy templating! 🎉**
+Built with ❤️ for developers who love Handlebars templates
