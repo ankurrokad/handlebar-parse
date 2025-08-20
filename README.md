@@ -239,8 +239,8 @@ useEffect(() => {
 
 ### **Installation**
 ```bash
-git clone <repository-url>
-cd hbs-parser
+git clone https://github.com/ankurrokad/handlebar-parse.git
+cd handlebar-parse
 pnpm install
 pnpm dev
 ```
@@ -278,10 +278,6 @@ pnpm dev
 3. Make your changes
 4. Test thoroughly
 5. Submit a pull request
-
-## 📄 License
-
-MIT License - see LICENSE file for details
 
 ## 🆘 Support
 
