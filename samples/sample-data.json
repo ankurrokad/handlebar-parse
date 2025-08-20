@@ -1,0 +1,61 @@
+{
+  "title": "HBS Parser - Advanced Template Engine",
+  "description": "A powerful and developer-friendly tool for creating, editing, and previewing Handlebars templates in real-time",
+  "showFeatures": true,
+  "features": [
+    {
+      "name": "Real-time Preview",
+      "description": "See your templates rendered instantly as you type",
+      "price": "Free"
+    },
+    {
+      "name": "VSCode-like Editor",
+      "description": "Professional code editing experience with syntax highlighting",
+      "price": "Free"
+    },
+    {
+      "name": "Auto-compilation",
+      "description": "Automatic template compilation with error handling",
+      "price": "Free"
+    },
+    {
+      "name": "Custom Helpers",
+      "description": "Built-in and extensible Handlebars helpers",
+      "price": "Free"
+    },
+    {
+      "name": "File Import/Export",
+      "description": "Import templates and data, export compiled HTML",
+      "price": "Free"
+    }
+  ],
+  "showStats": true,
+  "stats": [
+    {
+      "value": "100%",
+      "label": "Handlebars Compatible"
+    },
+    {
+      "value": "Real-time",
+      "label": "Compilation Speed"
+    },
+    {
+      "value": "Modern",
+      "label": "UI/UX Design"
+    },
+    {
+      "value": "Free",
+      "label": "Open Source"
+    }
+  ],
+  "showContact": true,
+  "contact": {
+    "email": "support@hbs-parser.com",
+    "phone": "+1 (555) 123-4567",
+    "address": "123 Developer Street, Code City, CS 12345"
+  },
+  "showPoweredBy": true,
+  "generatedAt": "2024-01-15T10:30:00Z",
+  "version": "1.0.0",
+  "customStyles": "background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin: 20px 0;"
+}
