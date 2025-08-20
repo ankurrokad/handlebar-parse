@@ -408,13 +408,7 @@ export default function Home() {
             {isDarkTheme ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
           </button>
           
-          <button
-            onClick={handleCopyHtml}
-            className="p-1 rounded text-gray-500 hover:bg-[#161616]"
-            title="Copy HTML to clipboard"
-          >
-            <Copy className="h-3 w-3" />
-          </button>
+          
           
           <button
             onClick={manualSave}
@@ -503,30 +497,49 @@ export default function Home() {
                
                <div className="flex-1"></div>
                
-               {/* Save Status Indicator */}
-               {lastSaved && (
-                 <motion.div 
-                   className="flex items-center px-2"
-                   initial={{ scale: 0 }}
-                   animate={{ scale: 1 }}
-                   key={lastSaved.getTime()}
-                 >
-                   <motion.div
-                     className="flex items-center space-x-1 text-xs text-[#28C840]"
-                     animate={{ 
-                       scale: [1, 1.2, 1],
-                       opacity: [1, 0.8, 1]
-                     }}
-                     transition={{ 
-                       duration: 0.6,
-                       repeat: 2,
-                       ease: "easeInOut"
-                     }}
-                   >
-                     <CheckCircle className="h-3 w-3" />
-                   </motion.div>
-                 </motion.div>
-               )}
+                               {/* Save Status Indicator */}
+                {lastSaved && (
+                  <motion.div 
+                    className="flex items-center px-2"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    key={lastSaved.getTime()}
+                  >
+                    <motion.div
+                      className="flex items-center space-x-1 text-xs text-[#28C840]"
+                      animate={{ 
+                        scale: [1, 1.2, 1],
+                        opacity: [1, 0.8, 1]
+                      }}
+                      transition={{ 
+                        duration: 0.6,
+                        repeat: 2,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <CheckCircle className="h-3 w-3" />
+                    </motion.div>
+                  </motion.div>
+                )}
+                
+                {/* Copy Current Tab Button */}
+                <button
+                  onClick={() => {
+                    let contentToCopy = ''
+                    if (activeTab === 'template') contentToCopy = template
+                    else if (activeTab === 'data') contentToCopy = data
+                    else if (activeTab === 'layout') contentToCopy = layout
+                    
+                    if (contentToCopy) {
+                      navigator.clipboard.writeText(contentToCopy)
+                      // You could add a toast notification here
+                    }
+                  }}
+                  className="p-1 rounded text-gray-500 hover:bg-[#161616] hover:text-gray-300 transition-colors"
+                  title={`Copy ${activeTab === 'template' ? 'template' : activeTab === 'data' ? 'data' : 'layout'} content`}
+                >
+                  <Copy className="h-3 w-3" />
+                </button>
              </div>
 
             <div className="flex-1 relative">
@@ -718,21 +731,33 @@ export default function Home() {
           transition={{ duration: 0.5, delay: 0.3 }}
         >
           <div className="h-full flex flex-col">
-                          <div className="h-7 bg-[#0A0A0A] border-b border-[#333333] flex items-center px-3 justify-between">
-                <div className="flex items-center space-x-1.5">
-                  <div className="flex space-x-1.5">
-                    <div className="w-3 h-3 rounded-full bg-[#FF5F57] opacity-75"></div>
-                    <div className="w-3 h-3 rounded-full bg-[#FFBD2E] opacity-75"></div>
-                    <div className="w-3 h-3 rounded-full bg-[#28C840] opacity-75"></div>
-                  </div>
-                  <span className="text-xs text-gray-500">Preview</span>
-                </div>
-                {error && (
-                  <div className="text-xs px-2 py-0.5 rounded bg-[#450A0A] border border-red-900/50 text-red-500">
-                    Error
-                  </div>
-                )}
-            </div>
+                                                     <div className="h-7 bg-[#0A0A0A] border-b border-[#333333] flex items-center px-3 justify-between">
+                 <div className="flex items-center space-x-1.5">
+                   <div className="flex space-x-1.5">
+                     <div className="w-3 h-3 rounded-full bg-[#FF5F57] opacity-75"></div>
+                     <div className="w-3 h-3 rounded-full bg-[#FFBD2E] opacity-75"></div>
+                     <div className="w-3 h-3 rounded-full bg-[#28C840] opacity-75"></div>
+                   </div>
+                   <span className="text-xs text-gray-500">Preview</span>
+                 </div>
+                 
+                 <div className="flex items-center space-x-2">
+                   {error && (
+                     <div className="text-xs px-2 py-0.5 rounded bg-[#450A0A] border border-red-900/50 text-red-500">
+                       Error
+                     </div>
+                   )}
+                   
+                   {/* Copy HTML Button */}
+                   <button
+                     onClick={handleCopyHtml}
+                     className="p-1 rounded text-gray-500 hover:bg-[#161616] hover:text-gray-300 transition-colors"
+                     title="Copy HTML to clipboard"
+                   >
+                     <Copy className="h-3 w-3" />
+                   </button>
+                 </div>
+             </div>
 
                           <div className="flex-1 overflow-auto bg-white dark:bg-black">
                 <AnimatePresence mode="wait">
