@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Code2, FileJson, Eye, Copy, Upload, Play, Square, Sun, Moon } from 'lucide-react'
+import { Code2, FileJson, Eye, Copy, Upload, Play, Square, Sun, Moon, Layout, Layers } from 'lucide-react'
 import Editor from '@monaco-editor/react'
 import Handlebars from 'handlebars'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -11,9 +11,9 @@ import { Suspense } from 'react'
 import { Loading } from '@/components/loading'
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'template' | 'data'>('template')
+  const [activeTab, setActiveTab] = useState<'template' | 'data' | 'layout'>('layout')
   const [template, setTemplate] = useState(`<div class="container">
-  <h1>{{title}}</h1>
+  <h2>{{title}}</h2>
   <p>{{description}}</p>
   
   {{#if showList}}
@@ -41,10 +41,39 @@ export default function Home() {
   "date": "2024-01-15"
 }`)
   
+  const [layout, setLayout] = useState(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    .header { padding: 1rem; border-bottom: 1px solid #dee2e6; }
+    .content { padding: 2rem; }
+    .footer { padding: 1rem; text-align: center; border-top: 1px solid #dee2e6; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>{{title}}</h1>
+  </header>
+  
+  <main class="content">
+    {{{body}}}
+  </main>
+  
+  <footer class="footer">
+    <p>&copy; 2024 HBS Parser. Generated on {{formatDate date}}</p>
+  </footer>
+</body>
+</html>`)
+  
   const [compiledHtml, setCompiledHtml] = useState('')
   const [error, setError] = useState('')
   const [isPlaying, setIsPlaying] = useState(true)
   const [isDarkTheme, setIsDarkTheme] = useState(true)
+  const [useLayout, setUseLayout] = useState(true)
 
   // Custom Handlebars helpers
   useEffect(() => {
@@ -65,21 +94,33 @@ export default function Home() {
     })
   }, [])
 
-  // Compile template when template or data changes
+  // Compile template when template, data, or layout changes
   useEffect(() => {
     if (!isPlaying) return
     
     try {
       const parsedData = JSON.parse(data)
+      
+      // First compile the main template
       const templateFn = Handlebars.compile(template)
-      const result = templateFn(parsedData)
+      const templateResult = templateFn(parsedData)
+      
+      let result = templateResult
+      
+      // If layout is enabled, compile with layout
+      if (useLayout) {
+        const layoutData = { ...parsedData, body: templateResult }
+        const layoutFn = Handlebars.compile(layout)
+        result = layoutFn(layoutData)
+      }
+      
       setCompiledHtml(result)
       setError('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
       setCompiledHtml('')
     }
-  }, [template, data, isPlaying])
+  }, [template, data, layout, useLayout, isPlaying])
 
   const handleTemplateChange = (value: string | undefined) => {
     setTemplate(value || '')
@@ -87,6 +128,10 @@ export default function Home() {
 
   const handleDataChange = (value: string | undefined) => {
     setData(value || '')
+  }
+
+  const handleLayoutChange = (value: string | undefined) => {
+    setLayout(value || '')
   }
 
   const handleCopyHtml = async () => {
@@ -104,10 +149,10 @@ export default function Home() {
     }
   }
 
-  const handleImport = (type: 'template' | 'data') => {
+  const handleImport = (type: 'template' | 'data' | 'layout') => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = type === 'template' ? '.hbs,.html,.txt' : '.json,.txt'
+    input.accept = type === 'template' ? '.hbs,.html,.txt' : type === 'data' ? '.json,.txt' : '.html,.hbs,.txt'
     
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
@@ -117,8 +162,10 @@ export default function Home() {
           const content = e.target?.result as string
           if (type === 'template') {
             setTemplate(content)
-          } else {
+          } else if (type === 'data') {
             setData(content)
+          } else {
+            setLayout(content)
           }
         }
         reader.readAsText(file)
@@ -189,6 +236,18 @@ export default function Home() {
           </button>
           
           <button
+            onClick={() => setUseLayout(!useLayout)}
+            className={`p-1 rounded text-xs flex items-center ${
+              useLayout 
+                ? 'text-[#0070F3] hover:bg-[#0070F3]/10' 
+                : 'text-gray-500 hover:bg-[#161616]'
+            }`}
+            title={useLayout ? "Layout ON" : "Layout OFF"}
+          >
+            <Layers className="h-3 w-3" />
+          </button>
+          
+          <button
             onClick={toggleTheme}
             className="p-1 rounded text-gray-500 hover:bg-[#161616]"
             title="Toggle theme"
@@ -217,16 +276,34 @@ export default function Home() {
         >
           <div className="h-full flex flex-col">
                             <div className="flex h-7 bg-[#0A0A0A] border-b border-[#333333]">
-                  <button
-                    onClick={() => setActiveTab('template')}
-                    className={`flex items-center space-x-1.5 px-3 text-xs relative ${
-                      activeTab === 'template' 
-                        ? 'bg-black text-gray-200' 
-                        : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
-                    }`}
+              <button
+                onClick={() => setActiveTab('layout')}
+                className={`flex items-center space-x-1.5 px-3 text-xs relative ${
+                  activeTab === 'layout' 
+                    ? 'bg-black text-gray-200' 
+                    : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
+                }`}
+              >
+                <Layout className="h-3.5 w-3.5" />
+                <span>layout.html</span>
+                {activeTab === 'layout' && (
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500"
+                    layoutId="activeTab"
+                  />
+                )}
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('template')}
+                className={`flex items-center space-x-1.5 px-3 text-xs relative ${
+                  activeTab === 'template' 
+                    ? 'bg-black text-gray-200' 
+                    : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
+                }`}
               >
                 <Code2 className="h-3.5 w-3.5" />
-                <span>template.hbs</span>
+                <span>body.hbs</span>
                 {activeTab === 'template' && (
                   <motion.div
                     className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500"
@@ -234,13 +311,14 @@ export default function Home() {
                   />
                 )}
               </button>
-                                <button
-                    onClick={() => setActiveTab('data')}
-                    className={`flex items-center space-x-1.5 px-3 text-xs relative ${
-                      activeTab === 'data' 
-                        ? 'bg-black text-gray-200' 
-                        : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
-                    }`}
+              
+              <button
+                onClick={() => setActiveTab('data')}
+                className={`flex items-center space-x-1.5 px-3 text-xs relative ${
+                  activeTab === 'data' 
+                    ? 'bg-black text-gray-200' 
+                    : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
+                }`}
               >
                 <FileJson className="h-3.5 w-3.5" />
                 <span>data.json</span>
@@ -354,6 +432,60 @@ export default function Home() {
                             formatOnPaste: true,
                             formatOnType: true,
                           }}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'layout' && (
+                  <motion.div
+                    key="layout"
+                    className="absolute inset-0"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="relative h-full">
+                      <motion.div 
+                        className="absolute top-2 right-2 z-10"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleImport('layout')}
+                          className="glassmorphic-button"
+                          title="Import layout file"
+                        >
+                          <Upload className="h-4 w-4" />
+                        </Button>
+                      </motion.div>
+                      <Editor
+                        height="100%"
+                        defaultLanguage="html"
+                        value={layout}
+                        onChange={handleLayoutChange}
+                        theme={isDarkTheme ? "vs-dark" : "light"}
+                        options={{
+                          minimap: { enabled: false },
+                          fontSize: 14,
+                          fontWeight: '500',
+                          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                          lineNumbers: 'on',
+                          roundedSelection: false,
+                          scrollBeyondLastLine: false,
+                          automaticLayout: true,
+                          wordWrap: 'on',
+                          suggest: {
+                            showKeywords: true,
+                            showSnippets: true,
+                            showClasses: true,
+                            showFunctions: true,
+                            showVariables: true,
+                          },
+                        }}
                       />
                     </div>
                   </motion.div>
