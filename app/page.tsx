@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Code2, FileJson, Eye, Download, Upload, Play, Square, Sun, Moon } from 'lucide-react'
+import { Code2, FileJson, Eye, Copy, Upload, Play, Square, Sun, Moon } from 'lucide-react'
 import Editor from '@monaco-editor/react'
 import Handlebars from 'handlebars'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -89,14 +89,19 @@ export default function Home() {
     setData(value || '')
   }
 
-  const handleExport = () => {
-    const blob = new Blob([compiledHtml], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'compiled-template.html'
-    a.click()
-    URL.revokeObjectURL(url)
+  const handleCopyHtml = async () => {
+    try {
+      await navigator.clipboard.writeText(compiledHtml)
+      // You could add a toast notification here if you want
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = compiledHtml
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+    }
   }
 
   const handleImport = (type: 'template' | 'data') => {
@@ -192,11 +197,11 @@ export default function Home() {
           </button>
           
           <button
-            onClick={handleExport}
+            onClick={handleCopyHtml}
             className="p-1 rounded text-gray-500 hover:bg-[#161616]"
-            title="Export HTML"
+            title="Copy HTML to clipboard"
           >
-            <Download className="h-3 w-3" />
+            <Copy className="h-3 w-3" />
           </button>
         </div>
       </header>
