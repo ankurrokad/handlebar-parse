@@ -157,6 +157,21 @@ export default function Home() {
     }
   }
 
+  // Manual save function
+  const manualSave = () => {
+    try {
+      localStorage.setItem('hbs-parser-template', template)
+      localStorage.setItem('hbs-parser-data', data)
+      localStorage.setItem('hbs-parser-layout', layout)
+      setLastSaved(new Date())
+      
+      // Show save feedback (you could add a toast notification here)
+      console.log('Content manually saved!')
+    } catch (err) {
+      console.warn('Failed to manually save:', err)
+    }
+  }
+
   const handleCopyHtml = async () => {
     try {
       await navigator.clipboard.writeText(compiledHtml)
@@ -321,6 +336,23 @@ export default function Home() {
     }
   }, [])
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+S or Cmd+S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        e.stopPropagation()
+        manualSave()
+        return false
+      }
+    }
+
+    // Use capture phase to ensure we get the event first
+    document.addEventListener('keydown', handleKeyDown, true)
+    return () => document.removeEventListener('keydown', handleKeyDown, true)
+  }, [template, data, layout]) // Dependencies for manualSave
+
   return (
     <Suspense fallback={<Loading />}>
     <motion.div 
@@ -385,6 +417,14 @@ export default function Home() {
           </button>
           
           <button
+            onClick={manualSave}
+            className="p-1 rounded text-gray-500 hover:bg-[#161616]"
+            title="Save content (Ctrl+S)"
+          >
+            <CheckCircle className="h-3 w-3" />
+          </button>
+          
+          <button
             onClick={resetToDefaults}
             className="p-1 rounded text-gray-500 hover:bg-[#161616]"
             title="Reset to defaults"
@@ -393,13 +433,7 @@ export default function Home() {
           </button>
         </div>
         
-        {/* Save Indicator */}
-        {lastSaved && (
-          <div className="flex items-center space-x-1 text-xs text-gray-500">
-            <CheckCircle className="h-3 w-3 text-[#28C840]" />
-            <span>Saved {lastSaved.toLocaleTimeString()}</span>
-          </div>
-        )}
+
       </header>
 
       {/* Main Content - Full Width */}
@@ -412,62 +446,88 @@ export default function Home() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <div className="h-full flex flex-col">
-                            <div className="flex h-7 bg-[#0A0A0A] border-b border-[#333333]">
-              <button
-                onClick={() => setActiveTab('layout')}
-                className={`flex items-center space-x-1.5 px-3 text-xs relative ${
-                  activeTab === 'layout' 
-                    ? 'bg-black text-gray-200' 
-                    : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
-                }`}
-              >
-                <Layout className="h-3.5 w-3.5" />
-                <span>layout.html</span>
-                {activeTab === 'layout' && (
-                  <motion.div
-                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500"
-                    layoutId="activeTab"
-                  />
-                )}
-              </button>
-              
-              <button
-                onClick={() => setActiveTab('template')}
-                className={`flex items-center space-x-1.5 px-3 text-xs relative ${
-                  activeTab === 'template' 
-                    ? 'bg-black text-gray-200' 
-                    : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
-                }`}
-              >
-                <Code2 className="h-3.5 w-3.5" />
-                <span>body.hbs</span>
-                {activeTab === 'template' && (
-                  <motion.div
-                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500"
-                    layoutId="activeTab"
-                  />
-                )}
-              </button>
-              
-              <button
-                onClick={() => setActiveTab('data')}
-                className={`flex items-center space-x-1.5 px-3 text-xs relative ${
-                  activeTab === 'data' 
-                    ? 'bg-black text-gray-200' 
-                    : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
-                }`}
-              >
-                <FileJson className="h-3.5 w-3.5" />
-                <span>data.json</span>
-                {activeTab === 'data' && (
-                  <motion.div
-                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500"
-                    layoutId="activeTab"
-                  />
-                )}
-              </button>
-              <div className="flex-1"></div>
-            </div>
+                                         <div className="flex h-7 bg-[#0A0A0A] border-b border-[#333333]">
+               <button
+                 onClick={() => setActiveTab('layout')}
+                 className={`flex items-center space-x-1.5 px-3 text-xs relative ${
+                   activeTab === 'layout' 
+                     ? 'bg-black text-gray-200' 
+                     : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
+                 }`}
+               >
+                 <Layout className="h-3.5 w-3.5" />
+                 <span>layout.html</span>
+                 {activeTab === 'layout' && (
+                   <motion.div
+                     className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500"
+                     layoutId="activeTab"
+                   />
+                 )}
+               </button>
+               
+               <button
+                 onClick={() => setActiveTab('template')}
+                 className={`flex items-center space-x-1.5 px-3 text-xs relative ${
+                   activeTab === 'template' 
+                     ? 'bg-black text-gray-200' 
+                     : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
+                 }`}
+               >
+                 <Code2 className="h-3.5 w-3.5" />
+                 <span>body.hbs</span>
+                 {activeTab === 'template' && (
+                   <motion.div
+                     className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500"
+                     layoutId="activeTab"
+                   />
+                 )}
+               </button>
+               
+               <button
+                 onClick={() => setActiveTab('data')}
+                 className={`flex items-center space-x-1.5 px-3 text-xs relative ${
+                   activeTab === 'data' 
+                     ? 'bg-black text-gray-200' 
+                     : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
+                 }`}
+               >
+                 <FileJson className="h-3.5 w-3.5" />
+                 <span>data.json</span>
+                 {activeTab === 'data' && (
+                   <motion.div
+                     className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500"
+                     layoutId="activeTab"
+                   />
+                 )}
+               </button>
+               
+               <div className="flex-1"></div>
+               
+               {/* Save Status Indicator */}
+               {lastSaved && (
+                 <motion.div 
+                   className="flex items-center px-2"
+                   initial={{ scale: 0 }}
+                   animate={{ scale: 1 }}
+                   key={lastSaved.getTime()}
+                 >
+                   <motion.div
+                     className="flex items-center space-x-1 text-xs text-[#28C840]"
+                     animate={{ 
+                       scale: [1, 1.2, 1],
+                       opacity: [1, 0.8, 1]
+                     }}
+                     transition={{ 
+                       duration: 0.6,
+                       repeat: 2,
+                       ease: "easeInOut"
+                     }}
+                   >
+                     <CheckCircle className="h-3 w-3" />
+                   </motion.div>
+                 </motion.div>
+               )}
+             </div>
 
             <div className="flex-1 relative">
               <AnimatePresence mode="wait">
@@ -496,31 +556,37 @@ export default function Home() {
                           <Upload className="h-4 w-4" />
                         </Button>
                       </motion.div>
-                      <Editor
-                        height="100%"
-                        defaultLanguage="handlebars"
-                        value={template}
-                        onChange={handleTemplateChange}
-                        theme={isDarkTheme ? "vs-dark" : "light"}
-                                                  options={{
-                            minimap: { enabled: false },
-                            fontSize: 14,
-                            fontWeight: '500',
-                            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                            lineNumbers: 'on',
-                            roundedSelection: false,
-                            scrollBeyondLastLine: false,
-                            automaticLayout: true,
-                            wordWrap: 'on',
-                            suggest: {
-                              showKeywords: true,
-                              showSnippets: true,
-                              showClasses: true,
-                              showFunctions: true,
-                              showVariables: true,
-                            },
-                          }}
-                      />
+                                             <Editor
+                         height="100%"
+                         defaultLanguage="handlebars"
+                         value={template}
+                         onChange={handleTemplateChange}
+                         theme={isDarkTheme ? "vs-dark" : "light"}
+                         options={{
+                           minimap: { enabled: false },
+                           fontSize: 14,
+                           fontWeight: '500',
+                           fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                           lineNumbers: 'on',
+                           roundedSelection: false,
+                           scrollBeyondLastLine: false,
+                           automaticLayout: true,
+                           wordWrap: 'on',
+                           suggest: {
+                             showKeywords: true,
+                             showSnippets: true,
+                             showClasses: true,
+                             showFunctions: true,
+                             showVariables: true,
+                           },
+                         }}
+                         onMount={(editor) => {
+                           // Disable browser's default Ctrl+S behavior in Monaco Editor
+                           editor.addCommand(2048 | 31, () => {
+                             manualSave()
+                           })
+                         }}
+                       />
                     </div>
                   </motion.div>
                 )}
@@ -550,26 +616,32 @@ export default function Home() {
                           <Upload className="h-4 w-4" />
                         </Button>
                       </motion.div>
-                      <Editor
-                        height="100%"
-                        defaultLanguage="json"
-                        value={data}
-                        onChange={handleDataChange}
-                        theme={isDarkTheme ? "vs-dark" : "light"}
-                                                  options={{
-                            minimap: { enabled: false },
-                            fontSize: 14,
-                            fontWeight: '500',
-                            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                            lineNumbers: 'on',
-                            roundedSelection: false,
-                            scrollBeyondLastLine: false,
-                            automaticLayout: true,
-                            wordWrap: 'on',
-                            formatOnPaste: true,
-                            formatOnType: true,
-                          }}
-                      />
+                                             <Editor
+                         height="100%"
+                         defaultLanguage="json"
+                         value={data}
+                         onChange={handleDataChange}
+                         theme={isDarkTheme ? "vs-dark" : "light"}
+                         options={{
+                           minimap: { enabled: false },
+                           fontSize: 14,
+                           fontWeight: '500',
+                           fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                           lineNumbers: 'on',
+                           roundedSelection: false,
+                           scrollBeyondLastLine: false,
+                           automaticLayout: true,
+                           wordWrap: 'on',
+                           formatOnPaste: true,
+                           formatOnType: true,
+                         }}
+                         onMount={(editor) => {
+                           // Disable browser's default Ctrl+S behavior in Monaco Editor
+                           editor.addCommand(2048 | 31, () => {
+                             manualSave()
+                           })
+                         }}
+                       />
                     </div>
                   </motion.div>
                 )}
@@ -599,31 +671,37 @@ export default function Home() {
                           <Upload className="h-4 w-4" />
                         </Button>
                       </motion.div>
-                      <Editor
-                        height="100%"
-                        defaultLanguage="html"
-                        value={layout}
-                        onChange={handleLayoutChange}
-                        theme={isDarkTheme ? "vs-dark" : "light"}
-                        options={{
-                          minimap: { enabled: false },
-                          fontSize: 14,
-                          fontWeight: '500',
-                          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                          lineNumbers: 'on',
-                          roundedSelection: false,
-                          scrollBeyondLastLine: false,
-                          automaticLayout: true,
-                          wordWrap: 'on',
-                          suggest: {
-                            showKeywords: true,
-                            showSnippets: true,
-                            showClasses: true,
-                            showFunctions: true,
-                            showVariables: true,
-                          },
-                        }}
-                      />
+                                             <Editor
+                         height="100%"
+                         defaultLanguage="html"
+                         value={layout}
+                         onChange={handleLayoutChange}
+                         theme={isDarkTheme ? "vs-dark" : "light"}
+                         options={{
+                           minimap: { enabled: false },
+                           fontSize: 14,
+                           fontWeight: '500',
+                           fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                           lineNumbers: 'on',
+                           roundedSelection: false,
+                               scrollBeyondLastLine: false,
+                               automaticLayout: true,
+                               wordWrap: 'on',
+                               suggest: {
+                                 showKeywords: true,
+                                 showSnippets: true,
+                                 showClasses: true,
+                                 showFunctions: true,
+                                 showVariables: true,
+                               },
+                             }}
+                             onMount={(editor) => {
+                               // Disable browser's default Ctrl+S behavior in Monaco Editor
+                               editor.addCommand(2048 | 31, () => {
+                                 manualSave()
+                               })
+                             }}
+                           />
                     </div>
                   </motion.div>
                 )}
