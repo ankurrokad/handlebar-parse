@@ -7,6 +7,9 @@ import Handlebars from 'handlebars'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 
+import { Suspense } from 'react'
+import { Loading } from '@/components/loading'
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'template' | 'data'>('template')
   const [template, setTemplate] = useState(`<div class="container">
@@ -146,6 +149,7 @@ export default function Home() {
   }, [])
 
   return (
+    <Suspense fallback={<Loading />}>
     <motion.div 
       className={`min-h-screen ${isDarkTheme ? 'bg-[#000000]' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
       initial={{ opacity: 0 }}
@@ -412,5 +416,6 @@ export default function Home() {
         </motion.div>
       </div>
     </motion.div>
+    </Suspense>
   )
 }
