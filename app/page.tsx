@@ -164,7 +164,7 @@ export default function Home() {
       </div>
 
       {/* Header */}
-      <header className="h-8 bg-[#0A0A0A] border-b border-[#333333] flex items-center justify-between px-2 select-none">
+      <header className="h-8 bg-[#0A0A0A] border-b border-[#333333] flex items-center justify-between px-2 select-none" style={{ height: '32px' }}>
         <div className="flex items-center space-x-2">
           <Code2 className="h-4 w-4 text-[#0070F3]" />
           <span className="text-xs text-gray-500">HBS Parser</span>
@@ -202,7 +202,7 @@ export default function Home() {
       </header>
 
       {/* Main Content - Full Width */}
-      <div className="relative z-10 h-[calc(100vh-8px)] grid grid-cols-1 xl:grid-cols-2 divide-x divide-[#333333]">
+      <div className="relative z-10 grid grid-cols-1 xl:grid-cols-2 divide-x divide-[#333333]" style={{ height: 'calc(100vh - 32px)' }}>
         {/* Left Panel - Template & Data Editor */}
         <motion.div 
           className="h-full"
