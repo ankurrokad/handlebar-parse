@@ -11,7 +11,7 @@ import { Suspense } from 'react'
 import { Loading } from '@/components/loading'
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'template' | 'data' | 'layout'>('layout')
+  const [activeTab, setActiveTab] = useState<'template' | 'data' | 'layout' | 'styles'>('layout')
   const [template, setTemplate] = useState(`<div class="container">
   <h2>{{title}}</h2>
   <p>{{description}}</p>
@@ -37,33 +37,82 @@ export default function Home() {
   "date": "2024-01-15"
 }`)
   
-  const [layout, setLayout] = useState(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{title}}</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    .header { padding: 1rem; border-bottom: 1px solid #dee2e6; }
-    .content { padding: 2rem; }
-    .footer { padding: 1rem; text-align: center; border-top: 1px solid #dee2e6; }
-  </style>
-</head>
-<body>
-  <header class="header">
-    <h1>{{title}}</h1>
-  </header>
-  
-  <main class="content">
-    {{{body}}}
-  </main>
-  
-  <footer class="footer">
-    <p>&copy; 2024 HBS Parser. Generated on {{formatDate date}}</p>
-  </footer>
-</body>
-</html>`)
+    const [layout, setLayout] = useState(`<!DOCTYPE html>
+ <html lang="en">
+ <head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>{{title}}</title>
+ </head>
+ <body>
+   <header class="header">
+     <h1>{{title}}</h1>
+   </header>
+   
+   <main class="content">
+     {{{body}}}
+   </main>
+   
+   <footer class="footer">
+     <p>&copy; 2024 HBS Parser. Generated on {{formatDate date}}</p>
+   </footer>
+ </body>
+ </html>`)
+   
+   const [styles, setStyles] = useState(`/* Custom Styles for Template */
+ body {
+   font-family: Arial, sans-serif;
+   margin: 0;
+   padding: 0;
+ }
+ 
+ .header {
+   padding: 1rem;
+   border-bottom: 1px solid #dee2e6;
+ }
+ 
+ .content {
+   padding: 2rem;
+   margin: 1rem;
+   border-radius: 8px;
+   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+ }
+ 
+ .footer {
+   padding: 1rem;
+   text-align: center;
+   border-top: 1px solid #dee2e6;
+   margin-top: 2rem;
+ }
+ 
+ .container {
+   max-width: 1200px;
+   margin: 0 auto;
+ }
+ 
+ h1, h2 {
+   color: #333;
+   margin-bottom: 1rem;
+ }
+ 
+ p {
+   color: #666;
+   line-height: 1.6;
+ }
+ 
+ ul {
+   list-style: none;
+   padding: 0;
+ }
+ 
+ li {
+   padding: 0.5rem 0;
+   border-bottom: 1px solid #eee;
+ }
+ 
+ li:last-child {
+   border-bottom: none;
+ }`)
   
   const [compiledHtml, setCompiledHtml] = useState('')
   const [error, setError] = useState('')
@@ -91,7 +140,7 @@ export default function Home() {
     })
   }, [])
 
-  // Compile template when template, data, or layout changes
+  // Compile template when template, data, layout, or styles changes
   useEffect(() => {
     if (!isPlaying) return
     
@@ -111,13 +160,25 @@ export default function Home() {
         result = layoutFn(layoutData)
       }
       
+      // Inject custom styles into the result
+      if (styles.trim()) {
+        const styleTag = `<style>\n${styles}\n</style>`
+        if (useLayout) {
+          // Insert styles in the head section of layout
+          result = result.replace('</head>', `${styleTag}\n</head>`)
+        } else {
+          // Insert styles at the beginning of the template result
+          result = styleTag + '\n' + result
+        }
+      }
+      
       setCompiledHtml(result)
       setError('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
       setCompiledHtml('')
     }
-  }, [template, data, layout, useLayout, isPlaying])
+  }, [template, data, layout, styles, useLayout, isPlaying])
 
   const handleTemplateChange = (value: string | undefined) => {
     const newValue = value || ''
@@ -135,6 +196,12 @@ export default function Home() {
     const newValue = value || ''
     setLayout(newValue)
     saveToStorage('hbs-parser-layout', newValue)
+  }
+  
+  const handleStylesChange = (value: string | undefined) => {
+    const newValue = value || ''
+    setStyles(newValue)
+    saveToStorage('hbs-parser-styles', newValue)
   }
 
   // Auto-save to localStorage
@@ -163,6 +230,7 @@ export default function Home() {
       localStorage.setItem('hbs-parser-template', template)
       localStorage.setItem('hbs-parser-data', data)
       localStorage.setItem('hbs-parser-layout', layout)
+      localStorage.setItem('hbs-parser-styles', styles)
       setLastSaved(new Date())
       
       // Show save feedback (you could add a toast notification here)
@@ -187,10 +255,12 @@ export default function Home() {
     }
   }
 
-  const handleImport = (type: 'template' | 'data' | 'layout') => {
+  const handleImport = (type: 'template' | 'data' | 'layout' | 'styles') => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = type === 'template' ? '.hbs,.html,.txt' : type === 'data' ? '.json,.txt' : '.html,.hbs,.txt'
+    input.accept = type === 'template' ? '.hbs,.html,.txt' : 
+                   type === 'data' ? '.json,.txt' : 
+                   type === 'styles' ? '.css,.txt' : '.html,.hbs,.txt'
     
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
@@ -202,6 +272,8 @@ export default function Home() {
             setTemplate(content)
           } else if (type === 'data') {
             setData(content)
+          } else if (type === 'styles') {
+            setStyles(content)
           } else {
             setLayout(content)
           }
@@ -272,12 +344,6 @@ export default function Home() {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{title}}</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    .header { padding: 1rem; border-bottom: 1px solid #dee2e6; }
-    .content { padding: 2rem; }
-    .footer { padding: 1rem; text-align: center; border-top: 1px solid #dee2e6; }
-  </style>
 </head>
 <body>
   <header class="header">
@@ -294,11 +360,67 @@ export default function Home() {
 </body>
 </html>`)
       
+      setStyles(`/* Custom Styles for Template */
+ body {
+   font-family: Arial, sans-serif;
+   margin: 0;
+   padding: 0;
+ }
+ 
+ .header {
+   padding: 1rem;
+   border-bottom: 1px solid #dee2e6;
+ }
+ 
+ .content {
+   padding: 2rem;
+   margin: 1rem;
+   border-radius: 8px;
+   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+ }
+ 
+ .footer {
+   padding: 1rem;
+   text-align: center;
+   border-top: 1px solid #dee2e6;
+   margin-top: 2rem;
+ }
+ 
+ .container {
+   max-width: 1200px;
+   margin: 0 auto;
+ }
+ 
+ h1, h2 {
+   color: #333;
+   margin-bottom: 1rem;
+ }
+ 
+ p {
+   color: #666;
+   line-height: 1.6;
+ }
+ 
+ ul {
+   list-style: none;
+   padding: 0;
+ }
+ 
+ li {
+   padding: 0.5rem 0;
+   border-bottom: 1px solid #eee;
+ }
+ 
+ li:last-child {
+   border-bottom: none;
+ }`)
+      
       // Clear localStorage
       try {
         localStorage.removeItem('hbs-parser-template')
         localStorage.removeItem('hbs-parser-data')
         localStorage.removeItem('hbs-parser-layout')
+        localStorage.removeItem('hbs-parser-styles')
         setLastSaved(null)
       } catch (err) {
         console.warn('Failed to clear localStorage:', err)
@@ -312,12 +434,14 @@ export default function Home() {
       const savedTemplate = localStorage.getItem('hbs-parser-template')
       const savedData = localStorage.getItem('hbs-parser-data')
       const savedLayout = localStorage.getItem('hbs-parser-layout')
+      const savedStyles = localStorage.getItem('hbs-parser-styles')
       const savedTheme = localStorage.getItem('hbs-parser-theme')
       const savedUseLayout = localStorage.getItem('hbs-parser-useLayout')
       
       if (savedTemplate) setTemplate(savedTemplate)
       if (savedData) setData(savedData)
       if (savedLayout) setLayout(savedLayout)
+      if (savedStyles) setStyles(savedStyles)
       if (savedTheme) setIsDarkTheme(savedTheme === 'dark')
       if (savedUseLayout) setUseLayout(savedUseLayout === 'true')
       
@@ -351,7 +475,7 @@ export default function Home() {
     // Use capture phase to ensure we get the event first
     document.addEventListener('keydown', handleKeyDown, true)
     return () => document.removeEventListener('keydown', handleKeyDown, true)
-  }, [template, data, layout]) // Dependencies for manualSave
+  }, [template, data, layout, styles]) // Dependencies for manualSave
 
   return (
     <Suspense fallback={<Loading />}>
@@ -477,23 +601,41 @@ export default function Home() {
                  )}
                </button>
                
-               <button
-                 onClick={() => setActiveTab('data')}
-                 className={`flex items-center space-x-1.5 px-3 text-xs relative ${
-                   activeTab === 'data' 
-                     ? 'bg-black text-gray-200' 
-                     : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
-                 }`}
-               >
-                 <FileJson className="h-3.5 w-3.5" />
-                 <span>data.json</span>
-                 {activeTab === 'data' && (
-                   <motion.div
-                     className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500"
-                     layoutId="activeTab"
-                   />
-                 )}
-               </button>
+                               <button
+                  onClick={() => setActiveTab('data')}
+                  className={`flex items-center space-x-1.5 px-3 text-xs relative ${
+                    activeTab === 'data' 
+                      ? 'bg-black text-gray-200' 
+                      : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
+                  }`}
+                >
+                  <FileJson className="h-3.5 w-3.5" />
+                  <span>data.json</span>
+                  {activeTab === 'data' && (
+                    <motion.div
+                      className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500"
+                      layoutId="activeTab"
+                    />
+                  )}
+                </button>
+                
+                <button
+                  onClick={() => setActiveTab('styles')}
+                  className={`flex items-center space-x-1.5 px-3 text-xs relative ${
+                    activeTab === 'styles' 
+                      ? 'bg-black text-gray-200' 
+                      : 'text-gray-500 hover:text-gray-300 hover:bg-[#161616]'
+                  }`}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>styles.css</span>
+                  {activeTab === 'styles' && (
+                    <motion.div
+                      className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-500"
+                      layoutId="activeTab"
+                    />
+                  )}
+                </button>
                
                <div className="flex-1"></div>
                
@@ -522,24 +664,25 @@ export default function Home() {
                   </motion.div>
                 )}
                 
-                {/* Copy Current Tab Button */}
-                <button
-                  onClick={() => {
-                    let contentToCopy = ''
-                    if (activeTab === 'template') contentToCopy = template
-                    else if (activeTab === 'data') contentToCopy = data
-                    else if (activeTab === 'layout') contentToCopy = layout
-                    
-                    if (contentToCopy) {
-                      navigator.clipboard.writeText(contentToCopy)
-                      // You could add a toast notification here
-                    }
-                  }}
-                  className="p-1 rounded text-gray-500 hover:bg-[#161616] hover:text-gray-300 transition-colors"
-                  title={`Copy ${activeTab === 'template' ? 'template' : activeTab === 'data' ? 'data' : 'layout'} content`}
-                >
-                  <Copy className="h-3 w-3" />
-                </button>
+                                 {/* Copy Current Tab Button */}
+                 <button
+                   onClick={() => {
+                     let contentToCopy = ''
+                     if (activeTab === 'template') contentToCopy = template
+                     else if (activeTab === 'data') contentToCopy = data
+                     else if (activeTab === 'layout') contentToCopy = layout
+                     else if (activeTab === 'styles') contentToCopy = styles
+                     
+                     if (contentToCopy) {
+                       navigator.clipboard.writeText(contentToCopy)
+                       // You could add a toast notification here
+                     }
+                   }}
+                   className="p-1 rounded text-gray-500 hover:bg-[#161616] hover:text-gray-300 transition-colors"
+                   title={`Copy ${activeTab === 'template' ? 'template' : activeTab === 'data' ? 'data' : activeTab === 'styles' ? 'styles' : 'layout'} content`}
+                 >
+                   <Copy className="h-3 w-3" />
+                 </button>
              </div>
 
             <div className="flex-1 relative">
@@ -655,6 +798,67 @@ export default function Home() {
                            })
                          }}
                        />
+                    </div>
+                  </motion.div>
+                )}
+                
+                {activeTab === 'styles' && (
+                  <motion.div
+                    key="styles"
+                    className="absolute inset-0"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="relative h-full">
+                      <motion.div 
+                        className="absolute top-2 right-2 z-10"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleImport('styles')}
+                          className="glassmorphic-button"
+                          title="Import CSS file"
+                        >
+                          <Upload className="h-4 w-4" />
+                        </Button>
+                      </motion.div>
+                      
+                      <Editor
+                        height="100%"
+                        defaultLanguage="css"
+                        value={styles}
+                        onChange={handleStylesChange}
+                        theme={isDarkTheme ? "vs-dark" : "light"}
+                        options={{
+                          minimap: { enabled: false },
+                          fontSize: 14,
+                          fontWeight: '500',
+                          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                          lineNumbers: 'on',
+                          roundedSelection: false,
+                          scrollBeyondLastLine: false,
+                          automaticLayout: true,
+                          wordWrap: 'on',
+                          suggest: {
+                            showKeywords: true,
+                            showSnippets: true,
+                            showClasses: true,
+                            showFunctions: true,
+                            showVariables: true,
+                          },
+                        }}
+                        onMount={(editor) => {
+                          // Disable browser's default Ctrl+S behavior in Monaco Editor
+                          editor.addCommand(2048 | 31, () => {
+                            manualSave()
+                          })
+                        }}
+                      />
                     </div>
                   </motion.div>
                 )}
