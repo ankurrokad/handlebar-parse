@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Code2, FileJson, Eye, Copy, Upload, Play, Square, Sun, Moon, Layout, Layers } from 'lucide-react'
+import { Code2, FileJson, Eye, Copy, Upload, Play, Square, Sun, Moon, Layout, Layers, RotateCcw, CheckCircle } from 'lucide-react'
 import Editor from '@monaco-editor/react'
 import Handlebars from 'handlebars'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -70,6 +70,7 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(true)
   const [isDarkTheme, setIsDarkTheme] = useState(true)
   const [useLayout, setUseLayout] = useState(true)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
   // Custom Handlebars helpers
   useEffect(() => {
@@ -119,15 +120,41 @@ export default function Home() {
   }, [template, data, layout, useLayout, isPlaying])
 
   const handleTemplateChange = (value: string | undefined) => {
-    setTemplate(value || '')
+    const newValue = value || ''
+    setTemplate(newValue)
+    saveToStorage('hbs-parser-template', newValue)
   }
 
   const handleDataChange = (value: string | undefined) => {
-    setData(value || '')
+    const newValue = value || ''
+    setData(newValue)
+    saveToStorage('hbs-parser-data', newValue)
   }
 
   const handleLayoutChange = (value: string | undefined) => {
-    setLayout(value || '')
+    const newValue = value || ''
+    setLayout(newValue)
+    saveToStorage('hbs-parser-layout', newValue)
+  }
+
+  // Auto-save to localStorage
+  const saveToStorage = (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value)
+      setLastSaved(new Date())
+    } catch (err) {
+      console.warn('Failed to save to localStorage:', err)
+    }
+  }
+
+  // Save theme and layout preference
+  const savePreferences = () => {
+    try {
+      localStorage.setItem('hbs-parser-theme', isDarkTheme ? 'dark' : 'light')
+      localStorage.setItem('hbs-parser-useLayout', useLayout.toString())
+    } catch (err) {
+      console.warn('Failed to save preferences:', err)
+    }
   }
 
   const handleCopyHtml = async () => {
@@ -185,7 +212,105 @@ export default function Home() {
     } else {
       document.documentElement.classList.remove('dark')
     }
+    
+    // Save theme preference
+    savePreferences()
   }
+
+  const toggleLayout = () => {
+    const newUseLayout = !useLayout
+    setUseLayout(newUseLayout)
+    savePreferences()
+  }
+
+  const resetToDefaults = () => {
+    if (confirm('Are you sure you want to reset all templates to defaults? This will clear your saved work.')) {
+      // Reset to default values
+      setTemplate(`<div class="container">
+  <h2>{{title}}</h2>
+  <p>{{description}}</p>
+  
+  {{#if showList}}
+    <ul>
+      {{#each items}}
+        <li>{{name}} - {{price}}</li>
+      {{/each}}
+    </ul>
+  {{/if}}
+</div>`)
+      
+      setData(`{
+  "title": "Welcome to HBS Parser",
+  "description": "A powerful tool for Handlebars template development",
+  "showList": true,
+  "items": [
+    {"name": "Feature 1", "price": "$9.99"},
+    {"name": "Feature 2", "price": "$19.99"},
+    {"name": "Feature 3", "price": "$29.99"}
+  ],
+  "date": "2024-01-15"
+}`)
+      
+      setLayout(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    .header { padding: 1rem; border-bottom: 1px solid #dee2e6; }
+    .content { padding: 2rem; }
+    .footer { padding: 1rem; text-align: center; border-top: 1px solid #dee2e6; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>{{title}}</h1>
+  </header>
+  
+  <main class="content">
+    {{{body}}}
+  </main>
+  
+  <footer class="footer">
+    <p>&copy; 2024 HBS Parser. Generated on {{formatDate date}}</p>
+  </footer>
+</body>
+</html>`)
+      
+      // Clear localStorage
+      try {
+        localStorage.removeItem('hbs-parser-template')
+        localStorage.removeItem('hbs-parser-data')
+        localStorage.removeItem('hbs-parser-layout')
+        setLastSaved(null)
+      } catch (err) {
+        console.warn('Failed to clear localStorage:', err)
+      }
+    }
+  }
+
+  // Load saved data from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedTemplate = localStorage.getItem('hbs-parser-template')
+      const savedData = localStorage.getItem('hbs-parser-data')
+      const savedLayout = localStorage.getItem('hbs-parser-layout')
+      const savedTheme = localStorage.getItem('hbs-parser-theme')
+      const savedUseLayout = localStorage.getItem('hbs-parser-useLayout')
+      
+      if (savedTemplate) setTemplate(savedTemplate)
+      if (savedData) setData(savedData)
+      if (savedLayout) setLayout(savedLayout)
+      if (savedTheme) setIsDarkTheme(savedTheme === 'dark')
+      if (savedUseLayout) setUseLayout(savedUseLayout === 'true')
+      
+      setLastSaved(new Date())
+    } catch (err) {
+      console.warn('Failed to load from localStorage:', err)
+    }
+  }, [])
 
   // Set initial theme on mount
   useEffect(() => {
@@ -232,7 +357,7 @@ export default function Home() {
           </button>
           
           <button
-            onClick={() => setUseLayout(!useLayout)}
+            onClick={toggleLayout}
             className={`p-1 rounded text-xs flex items-center ${
               useLayout 
                 ? 'text-[#0070F3] hover:bg-[#0070F3]/10' 
@@ -258,7 +383,23 @@ export default function Home() {
           >
             <Copy className="h-3 w-3" />
           </button>
+          
+          <button
+            onClick={resetToDefaults}
+            className="p-1 rounded text-gray-500 hover:bg-[#161616]"
+            title="Reset to defaults"
+          >
+            <RotateCcw className="h-3 w-3" />
+          </button>
         </div>
+        
+        {/* Save Indicator */}
+        {lastSaved && (
+          <div className="flex items-center space-x-1 text-xs text-gray-500">
+            <CheckCircle className="h-3 w-3 text-[#28C840]" />
+            <span>Saved {lastSaved.toLocaleTimeString()}</span>
+          </div>
+        )}
       </header>
 
       {/* Main Content - Full Width */}
