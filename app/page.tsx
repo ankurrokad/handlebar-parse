@@ -23,10 +23,6 @@ export default function Home() {
       {{/each}}
     </ul>
   {{/if}}
-  
-  <div class="footer">
-    <p>Generated on {{formatDate date}}</p>
-  </div>
 </div>`)
   
   const [data, setData] = useState(`{
