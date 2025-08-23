@@ -121,6 +121,7 @@ export default function Home() {
   const [useLayout, setUseLayout] = useState(true)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
+
   // Custom Handlebars helpers
   useEffect(() => {
     Handlebars.registerHelper('formatDate', function(dateString) {
@@ -224,21 +225,7 @@ export default function Home() {
     }
   }
 
-  // Manual save function
-  const manualSave = () => {
-    try {
-      localStorage.setItem('hbs-parser-template', template)
-      localStorage.setItem('hbs-parser-data', data)
-      localStorage.setItem('hbs-parser-layout', layout)
-      localStorage.setItem('hbs-parser-styles', styles)
-      setLastSaved(new Date())
-      
-      // Show save feedback (you could add a toast notification here)
-      console.log('Content manually saved!')
-    } catch (err) {
-      console.warn('Failed to manually save:', err)
-    }
-  }
+
 
   const handleCopyHtml = async () => {
     try {
@@ -421,7 +408,6 @@ export default function Home() {
         localStorage.removeItem('hbs-parser-data')
         localStorage.removeItem('hbs-parser-layout')
         localStorage.removeItem('hbs-parser-styles')
-        setLastSaved(null)
       } catch (err) {
         console.warn('Failed to clear localStorage:', err)
       }
@@ -460,22 +446,7 @@ export default function Home() {
     }
   }, [])
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+S or Cmd+S to save
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault()
-        e.stopPropagation()
-        manualSave()
-        return false
-      }
-    }
 
-    // Use capture phase to ensure we get the event first
-    document.addEventListener('keydown', handleKeyDown, true)
-    return () => document.removeEventListener('keydown', handleKeyDown, true)
-  }, [template, data, layout, styles]) // Dependencies for manualSave
 
   return (
     <Suspense fallback={<Loading />}>
@@ -534,13 +505,7 @@ export default function Home() {
           
           
           
-          <button
-            onClick={manualSave}
-            className="p-1 rounded text-gray-500 hover:bg-[#161616]"
-            title="Save content (Ctrl+S)"
-          >
-            <CheckCircle className="h-3 w-3" />
-          </button>
+
           
           <button
             onClick={resetToDefaults}
@@ -637,9 +602,9 @@ export default function Home() {
                   )}
                 </button>
                
-               <div className="flex-1"></div>
-               
-                               {/* Save Status Indicator */}
+                               <div className="flex-1"></div>
+                
+                {/* Save Status Indicator */}
                 {lastSaved && (
                   <motion.div 
                     className="flex items-center px-2"
@@ -664,7 +629,7 @@ export default function Home() {
                   </motion.div>
                 )}
                 
-                                 {/* Copy Current Tab Button */}
+                {/* Copy Current Tab Button */}
                  <button
                    onClick={() => {
                      let contentToCopy = ''
@@ -736,12 +701,6 @@ export default function Home() {
                              showVariables: true,
                            },
                          }}
-                         onMount={(editor) => {
-                           // Disable browser's default Ctrl+S behavior in Monaco Editor
-                           editor.addCommand(2048 | 31, () => {
-                             manualSave()
-                           })
-                         }}
                        />
                     </div>
                   </motion.div>
@@ -790,12 +749,6 @@ export default function Home() {
                            wordWrap: 'on',
                            formatOnPaste: true,
                            formatOnType: true,
-                         }}
-                         onMount={(editor) => {
-                           // Disable browser's default Ctrl+S behavior in Monaco Editor
-                           editor.addCommand(2048 | 31, () => {
-                             manualSave()
-                           })
                          }}
                        />
                     </div>
@@ -852,12 +805,6 @@ export default function Home() {
                             showVariables: true,
                           },
                         }}
-                        onMount={(editor) => {
-                          // Disable browser's default Ctrl+S behavior in Monaco Editor
-                          editor.addCommand(2048 | 31, () => {
-                            manualSave()
-                          })
-                        }}
                       />
                     </div>
                   </motion.div>
@@ -911,12 +858,6 @@ export default function Home() {
                                  showFunctions: true,
                                  showVariables: true,
                                },
-                             }}
-                             onMount={(editor) => {
-                               // Disable browser's default Ctrl+S behavior in Monaco Editor
-                               editor.addCommand(2048 | 31, () => {
-                                 manualSave()
-                               })
                              }}
                            />
                     </div>
