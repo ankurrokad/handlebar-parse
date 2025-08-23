@@ -10,6 +10,25 @@ import { Button } from '@/components/ui/button'
 import { Suspense } from 'react'
 import { Loading } from '@/components/loading'
 
+// Add Monaco Editor mount handler
+const handleEditorDidMount = (editor: any, monaco: any) => {
+  // Ensure the editor has focus and keyboard shortcuts work
+  editor.focus()
+  
+  // Force enable all default shortcuts
+  editor.updateOptions({
+    multiCursorModifier: 'alt',
+    accessibilitySupport: 'on',
+    quickSuggestions: true,
+    selectOnLineNumbers: true,
+  })
+  
+  // Ensure Ctrl+A works by adding explicit command
+  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyA, () => {
+    editor.trigger('keyboard', 'editor.action.selectAll', {})
+  })
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'template' | 'data' | 'layout' | 'styles'>('layout')
   const [template, setTemplate] = useState(`<div class="container">
@@ -683,6 +702,7 @@ export default function Home() {
                          value={template}
                          onChange={handleTemplateChange}
                          theme={isDarkTheme ? "vs-dark" : "light"}
+                         onMount={handleEditorDidMount}
                          options={{
                            minimap: { enabled: false },
                            fontSize: 14,
@@ -700,6 +720,13 @@ export default function Home() {
                              showFunctions: true,
                              showVariables: true,
                            },
+                           // Ensure keyboard shortcuts work properly
+                           multiCursorModifier: 'alt',
+                           accessibilitySupport: 'on',
+                           // Enable all default shortcuts
+                           quickSuggestions: true,
+                           // Ensure Ctrl+A works
+                           selectOnLineNumbers: true,
                          }}
                        />
                     </div>
@@ -737,6 +764,7 @@ export default function Home() {
                          value={data}
                          onChange={handleDataChange}
                          theme={isDarkTheme ? "vs-dark" : "light"}
+                         onMount={handleEditorDidMount}
                          options={{
                            minimap: { enabled: false },
                            fontSize: 14,
@@ -749,6 +777,13 @@ export default function Home() {
                            wordWrap: 'on',
                            formatOnPaste: true,
                            formatOnType: true,
+                           // Ensure keyboard shortcuts work properly
+                           multiCursorModifier: 'alt',
+                           accessibilitySupport: 'on',
+                           // Enable all default shortcuts
+                           quickSuggestions: true,
+                           // Ensure Ctrl+A works
+                           selectOnLineNumbers: true,
                          }}
                        />
                     </div>
@@ -787,6 +822,7 @@ export default function Home() {
                         value={styles}
                         onChange={handleStylesChange}
                         theme={isDarkTheme ? "vs-dark" : "light"}
+                        onMount={handleEditorDidMount}
                         options={{
                           minimap: { enabled: false },
                           fontSize: 14,
@@ -804,6 +840,13 @@ export default function Home() {
                             showFunctions: true,
                             showVariables: true,
                           },
+                          // Ensure keyboard shortcuts work properly
+                          multiCursorModifier: 'alt',
+                          accessibilitySupport: 'on',
+                          // Enable all default shortcuts
+                          quickSuggestions: true,
+                          // Ensure Ctrl+A works
+                          selectOnLineNumbers: true,
                         }}
                       />
                     </div>
@@ -835,30 +878,38 @@ export default function Home() {
                           <Upload className="h-4 w-4" />
                         </Button>
                       </motion.div>
-                                             <Editor
-                         height="100%"
-                         defaultLanguage="html"
-                         value={layout}
-                         onChange={handleLayoutChange}
-                         theme={isDarkTheme ? "vs-dark" : "light"}
-                         options={{
-                           minimap: { enabled: false },
-                           fontSize: 14,
-                           fontWeight: '500',
-                           fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                           lineNumbers: 'on',
-                           roundedSelection: false,
-                               scrollBeyondLastLine: false,
-                               automaticLayout: true,
-                               wordWrap: 'on',
-                               suggest: {
-                                 showKeywords: true,
-                                 showSnippets: true,
-                                 showClasses: true,
-                                 showFunctions: true,
-                                 showVariables: true,
-                               },
-                             }}
+                                                                        <Editor
+                             height="100%"
+                             defaultLanguage="html"
+                             value={layout}
+                             onChange={handleLayoutChange}
+                             theme={isDarkTheme ? "vs-dark" : "light"}
+                             onMount={handleEditorDidMount}
+                             options={{
+                               minimap: { enabled: false },
+                               fontSize: 14,
+                               fontWeight: '500',
+                               fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                               lineNumbers: 'on',
+                               roundedSelection: false,
+                                   scrollBeyondLastLine: false,
+                                   automaticLayout: true,
+                                   wordWrap: 'on',
+                                   suggest: {
+                                     showKeywords: true,
+                                     showSnippets: true,
+                                     showClasses: true,
+                                     showFunctions: true,
+                                     showVariables: true,
+                                   },
+                                   // Ensure keyboard shortcuts work properly
+                                   multiCursorModifier: 'alt',
+                                   accessibilitySupport: 'on',
+                                   // Enable all default shortcuts
+                                   quickSuggestions: true,
+                                   // Ensure Ctrl+A works
+                                   selectOnLineNumbers: true,
+                                 }}
                            />
                     </div>
                   </motion.div>
