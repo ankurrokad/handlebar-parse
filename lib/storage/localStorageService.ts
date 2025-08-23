@@ -1,4 +1,4 @@
-import { StorageService } from './types'
+import { StorageService, Template } from './types'
 
 export class LocalStorageService implements StorageService {
   private prefix = 'hbs-parser-'
@@ -48,7 +48,42 @@ export class LocalStorageService implements StorageService {
     }
   }
 
-  // Convenience methods
+  // Template management methods
+  async saveTemplates(templates: Template[], currentTemplateId: string): Promise<void> {
+    try {
+      localStorage.setItem(this.getKey('templates'), JSON.stringify(templates))
+      localStorage.setItem(this.getKey('currentTemplateId'), currentTemplateId)
+    } catch (err) {
+      console.warn('Failed to save templates to localStorage:', err)
+      throw new Error(`Failed to save templates: ${err}`)
+    }
+  }
+
+  async getTemplates(): Promise<{ templates: Template[], currentTemplateId: string } | null> {
+    try {
+      const templatesStr = localStorage.getItem(this.getKey('templates'))
+      const currentTemplateId = localStorage.getItem(this.getKey('currentTemplateId'))
+      
+      if (!templatesStr) return null
+      
+      const templates = JSON.parse(templatesStr, (key, value) => {
+        if (key === 'createdAt' || key === 'updatedAt') {
+          return new Date(value)
+        }
+        return value
+      })
+      
+      return {
+        templates,
+        currentTemplateId: currentTemplateId || templates[0]?.id || 'default'
+      }
+    } catch (err) {
+      console.warn('Failed to read templates from localStorage:', err)
+      return null
+    }
+  }
+
+  // Legacy methods for backward compatibility
   async saveTemplate(template: string): Promise<void> {
     return this.saveFile('template', template)
   }
@@ -103,26 +138,15 @@ export class LocalStorageService implements StorageService {
 
   // Bulk operations
   async saveAll(data: Partial<{
-    template: string
-    data: string
-    layout: string
-    styles: string
+    templates: Template[]
+    currentTemplateId: string
     useLayout: boolean
     theme: 'dark' | 'light'
   }>): Promise<void> {
     const promises: Promise<void>[] = []
     
-    if (data.template !== undefined) {
-      promises.push(this.saveTemplate(data.template))
-    }
-    if (data.data !== undefined) {
-      promises.push(this.saveData(data.data))
-    }
-    if (data.layout !== undefined) {
-      promises.push(this.saveLayout(data.layout))
-    }
-    if (data.styles !== undefined) {
-      promises.push(this.saveStyles(data.styles))
+    if (data.templates !== undefined && data.currentTemplateId !== undefined) {
+      promises.push(this.saveTemplates(data.templates, data.currentTemplateId))
     }
     if (data.useLayout !== undefined) {
       promises.push(this.savePreferences(data.useLayout))
@@ -135,28 +159,23 @@ export class LocalStorageService implements StorageService {
   }
 
   async loadAll(): Promise<Partial<{
-    template: string
-    data: string
-    layout: string
-    styles: string
+    templates: Template[]
+    currentTemplateId: string
     useLayout: boolean
     theme: 'dark' | 'light'
   }>> {
-    const [template, data, layout, styles, preferences, theme] = await Promise.all([
-      this.getTemplate(),
-      this.getData(),
-      this.getLayout(),
-      this.getStyles(),
+    const [templatesData, preferences, theme] = await Promise.all([
+      this.getTemplates(),
       this.getPreferences(),
       this.getTheme()
     ])
 
     const result: any = {}
     
-    if (template !== null) result.template = template
-    if (data !== null) result.data = data
-    if (layout !== null) result.layout = layout
-    if (styles !== null) result.styles = styles
+    if (templatesData !== null) {
+      result.templates = templatesData.templates
+      result.currentTemplateId = templatesData.currentTemplateId
+    }
     if (preferences !== null) result.useLayout = preferences.useLayout
     if (theme !== null) result.theme = theme
     

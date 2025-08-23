@@ -1,4 +1,4 @@
-import { StorageService } from './types'
+import { StorageService, Template } from './types'
 
 export class IndexedDBService implements StorageService {
   private dbName = 'hbs-parser-db'
@@ -95,6 +95,87 @@ export class IndexedDBService implements StorageService {
     } catch (err) {
       console.warn('Failed to clear IndexedDB:', err)
       throw new Error(`Failed to clear storage: ${err}`)
+    }
+  }
+
+  // Template management methods
+  async saveTemplates(templates: Template[], currentTemplateId: string): Promise<void> {
+    try {
+      const db = await this.getDB()
+      const transaction = db.transaction([this.storeName], 'readwrite')
+      const store = transaction.objectStore(this.storeName)
+      
+      await new Promise<void>((resolve, reject) => {
+        const templatesRequest = store.put({ key: 'templates', value: JSON.stringify(templates) })
+        const currentIdRequest = store.put({ key: 'currentTemplateId', value: currentTemplateId })
+        
+        templatesRequest.onsuccess = () => {
+          currentIdRequest.onsuccess = () => resolve()
+          currentIdRequest.onerror = () => reject(currentIdRequest.error)
+        }
+        templatesRequest.onerror = () => reject(templatesRequest.error)
+      })
+    } catch (err) {
+      console.warn('Failed to save templates to IndexedDB:', err)
+      throw new Error(`Failed to save templates: ${err}`)
+    }
+  }
+
+  async getTemplates(): Promise<{ templates: Template[], currentTemplateId: string } | null> {
+    try {
+      const db = await this.getDB()
+      const transaction = db.transaction([this.storeName], 'readonly')
+      const store = transaction.objectStore(this.storeName)
+      
+      return new Promise((resolve, reject) => {
+        const templatesRequest = store.get('templates')
+        const currentIdRequest = store.get('currentTemplateId')
+        
+        let templatesResult: any = null
+        let currentIdResult: any = null
+        let completed = 0
+        
+        const checkComplete = () => {
+          completed++
+          if (completed === 2) {
+            if (!templatesResult) {
+              resolve(null)
+              return
+            }
+            
+            try {
+              const templates = JSON.parse(templatesResult.value, (key, value) => {
+                if (key === 'createdAt' || key === 'updatedAt') {
+                  return new Date(value)
+                }
+                return value
+              })
+              
+              resolve({
+                templates,
+                currentTemplateId: currentIdResult?.value || templates[0]?.id || 'default'
+              })
+            } catch (err) {
+              reject(err)
+            }
+          }
+        }
+        
+        templatesRequest.onsuccess = () => {
+          templatesResult = templatesRequest.result
+          checkComplete()
+        }
+        templatesRequest.onerror = () => reject(templatesRequest.error)
+        
+        currentIdRequest.onsuccess = () => {
+          currentIdResult = currentIdRequest.result
+          checkComplete()
+        }
+        currentIdRequest.onerror = () => reject(currentIdRequest.error)
+      })
+    } catch (err) {
+      console.warn('Failed to read templates from IndexedDB:', err)
+      return null
     }
   }
 

@@ -1,31 +1,67 @@
 'use client'
 
 import { Code2, Play, Square, Sun, Moon, Layers, RotateCcw } from 'lucide-react'
+import { TemplateSelector } from '@/components/editor/TemplateSelector'
+import { Template } from '@/lib/hooks/useEditor'
 
 interface HeaderProps {
   isPlaying: boolean
   useLayout: boolean
   isDarkTheme: boolean
+  templates: Template[]
+  currentTemplateId: string
   onToggleAutoPlay: () => void
   onToggleLayout: () => void
   onToggleTheme: () => void
   onResetToDefaults: () => void
+  onSwitchTemplate: (templateId: string) => void
+  onCreateTemplate: (name: string, slug: string) => void
+  onDeleteTemplate: (templateId: string) => void
+  onRenameTemplate: (templateId: string, newName: string, newSlug: string) => void
+  onCopyTemplate: (template: Template) => void
+  onExportTemplate: (template: Template) => void
+  onImportTemplate: (file: File) => Promise<boolean>
 }
 
 export const Header = ({
   isPlaying,
   useLayout,
   isDarkTheme,
+  templates,
+  currentTemplateId,
   onToggleAutoPlay,
   onToggleLayout,
   onToggleTheme,
-  onResetToDefaults
+  onResetToDefaults,
+  onSwitchTemplate,
+  onCreateTemplate,
+  onDeleteTemplate,
+  onRenameTemplate,
+  onCopyTemplate,
+  onExportTemplate,
+  onImportTemplate
 }: HeaderProps) => {
   return (
     <header className="h-8 bg-[#0A0A0A] border-b border-[#333333] flex items-center justify-between px-2 select-none" style={{ height: '32px' }}>
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-3">
         <Code2 className="h-4 w-4 text-[#0070F3]" />
         <span className="text-xs text-gray-500">HBS Parser</span>
+        
+        {/* Template Selector - moved beside the title */}
+        <div className="w-48">
+          <TemplateSelector
+            templates={templates}
+            currentTemplateId={currentTemplateId}
+            isDarkTheme={isDarkTheme}
+            onSwitchTemplate={onSwitchTemplate}
+            onCreateTemplate={onCreateTemplate}
+            onDeleteTemplate={onDeleteTemplate}
+            onRenameTemplate={onRenameTemplate}
+            onCopyTemplate={onCopyTemplate}
+            onExportTemplate={onExportTemplate}
+            onImportTemplate={onImportTemplate}
+          />
+        </div>
       </div>
       
       <div className="flex items-center space-x-1">

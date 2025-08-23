@@ -1,8 +1,18 @@
-export interface StorageData {
+export interface Template {
+  id: string
+  name: string
+  slug: string
   template: string
   data: string
   layout: string
   styles: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface StorageData {
+  templates: Template[]
+  currentTemplateId: string
   useLayout: boolean
   theme: 'dark' | 'light'
   lastSaved: Date | null
@@ -15,7 +25,11 @@ export interface StorageService {
   deleteFile(key: string): Promise<void>
   clearAll(): Promise<void>
   
-  // Convenience methods for specific data types
+  // Template management
+  saveTemplates(templates: Template[], currentTemplateId: string): Promise<void>
+  getTemplates(): Promise<{ templates: Template[], currentTemplateId: string } | null>
+  
+  // Legacy methods for backward compatibility
   saveTemplate(template: string): Promise<void>
   getTemplate(): Promise<string | null>
   

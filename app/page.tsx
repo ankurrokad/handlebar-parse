@@ -36,10 +36,10 @@ export default function Home() {
 
   const handleCopyCurrentTab = () => {
     let contentToCopy = ''
-    if (activeTab === 'template') contentToCopy = editor.template
-    else if (activeTab === 'data') contentToCopy = editor.data
-    else if (activeTab === 'styles') contentToCopy = editor.styles
-    else if (activeTab === 'layout') contentToCopy = editor.layout
+    if (activeTab === 'template') contentToCopy = editor.currentTemplate.template
+    else if (activeTab === 'data') contentToCopy = editor.currentTemplate.data
+    else if (activeTab === 'styles') contentToCopy = editor.currentTemplate.styles
+    else if (activeTab === 'layout') contentToCopy = editor.currentTemplate.layout
     
     if (contentToCopy) {
       handleCopyContent(contentToCopy)
@@ -60,19 +60,32 @@ export default function Home() {
           isPlaying={editor.isPlaying}
           useLayout={editor.useLayout}
           isDarkTheme={isDarkTheme}
+          templates={editor.templates}
+          currentTemplateId={editor.currentTemplateId}
           onToggleAutoPlay={editor.toggleAutoPlay}
           onToggleLayout={editor.toggleLayout}
           onToggleTheme={toggleTheme}
           onResetToDefaults={editor.resetToDefaults}
+          onSwitchTemplate={editor.switchTemplate}
+          onCreateTemplate={editor.createTemplate}
+          onDeleteTemplate={editor.deleteTemplate}
+          onRenameTemplate={editor.renameTemplate}
+          onCopyTemplate={(template) => {
+            const newName = `${template.name} (Copy)`
+            const newSlug = `${template.slug}-copy`
+            editor.createTemplate(newName, newSlug)
+          }}
+          onExportTemplate={editor.exportTemplate}
+          onImportTemplate={editor.importTemplate}
         />
 
         <MainContent
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          template={editor.template}
-          data={editor.data}
-          layout={editor.layout}
-          styles={editor.styles}
+          template={editor.currentTemplate.template}
+          data={editor.currentTemplate.data}
+          layout={editor.currentTemplate.layout}
+          styles={editor.currentTemplate.styles}
           onTemplateChange={handleTemplateChange}
           onDataChange={handleDataChange}
           onLayoutChange={handleLayoutChange}

@@ -1,4 +1,4 @@
-import { StorageService, StorageProvider, StorageConfig } from './types'
+import { StorageService, StorageProvider, StorageConfig, Template } from './types'
 import { LocalStorageService } from './localStorageService'
 import { IndexedDBService } from './indexedDBService'
 
@@ -107,6 +107,15 @@ export class StorageServiceManager {
 
   async clearAll(): Promise<void> {
     return this.currentService.clearAll()
+  }
+
+  // Template management methods
+  async saveTemplates(templates: Template[], currentTemplateId: string): Promise<void> {
+    return this.currentService.saveTemplates(templates, currentTemplateId)
+  }
+
+  async getTemplates(): Promise<{ templates: Template[], currentTemplateId: string } | null> {
+    return this.currentService.getTemplates()
   }
 
   async saveTemplate(template: string): Promise<void> {
