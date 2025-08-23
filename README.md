@@ -35,11 +35,11 @@ A modern, production-ready web application for real-time Handlebars template dev
 - **Theme Persistence** - User preferences saved across sessions
 - **Responsive Preview** - Mobile-friendly HTML rendering
 
-## 🏗️ How It Works
+## 🏗️ Architecture & Code Quality
 
-### **Architecture Overview**
+### **Modern React Architecture**
 
-The application follows a **client-side architecture** with the following key components:
+The application follows **modern React best practices** with a clean, maintainable architecture:
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -48,14 +48,44 @@ The application follows a **client-side architecture** with the following key co
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-### **Data Flow**
+### **Component Structure**
+
+The codebase is organized into **focused, reusable components**:
+
+```
+components/
+├── layout/          # Header, Background, MainContent
+├── editor/          # LeftPanel, TabNavigation, EditorPanel, MonacoEditor
+└── preview/         # RightPanel, PreviewPanel
+
+lib/
+├── hooks/           # useEditor, useTheme
+└── utils/           # File operations, clipboard functions
+```
+
+### **Key Benefits**
+
+✅ **Maintainable**: Each component has a single responsibility  
+✅ **Reusable**: Components can be shared across the application  
+✅ **Testable**: Individual pieces can be tested in isolation  
+✅ **Performance**: Better code splitting and optimization  
+✅ **Developer Experience**: Easy to navigate and debug
+
+### **Data Flow & State Management**
 
 1. **User Input** → Monaco Editor captures changes in real-time
-2. **State Update** → React state updates trigger re-renders
+2. **State Update** → Custom hooks manage state updates and trigger re-renders
 3. **Handlebars Compilation** → Template + Data + Layout compiled together
 4. **CSS Injection** → Custom styles automatically injected into output
 5. **HTML Rendering** → Final HTML displayed in preview panel
 6. **Auto-save** → All content automatically persisted to localStorage
+
+### **State Management Architecture**
+
+- **`useEditor` Hook**: Centralizes all editor state and Handlebars compilation logic
+- **`useTheme` Hook**: Manages theme state and localStorage persistence
+- **Component Props**: Clean data flow with props down, events up pattern
+- **Separation of Concerns**: UI components focus on rendering, hooks handle logic
 
 ### **Template Processing Pipeline**
 
@@ -73,18 +103,26 @@ Template (HBS) + Data (JSON) + Layout (HTML) + Styles (CSS)
             Final HTML Output
 ```
 
-### **Key Components Breakdown**
+### **Component Architecture Breakdown**
 
-#### **1. State Management**
-- **`activeTab`** - Controls which editor tab is currently visible
-- **`template`** - Handlebars template content
-- **`data`** - JSON data for template variables
-- **`layout`** - HTML layout structure with `{{{body}}}` placeholder
-- **`styles`** - Custom CSS for template styling
-- **`compiledHtml`** - Final rendered HTML output
-- **`error`** - Compilation error messages
-- **`isPlaying`** - Auto-compilation toggle state
-- **`useLayout`** - Layout system enable/disable state
+#### **1. Layout Components**
+- **`Header`** - Application controls (auto-play, layout, theme, reset)
+- **`Background`** - Animated background elements
+- **`MainContent`** - Main content wrapper with left/right panels
+
+#### **2. Editor Components**
+- **`LeftPanel`** - Contains the editor interface and tab navigation
+- **`TabNavigation`** - Manages tab switching and shows save status
+- **`EditorPanel`** - Handles tab content switching with animations
+- **`MonacoEditor`** - Reusable Monaco editor with file import support
+
+#### **3. Preview Components**
+- **`RightPanel`** - Contains the HTML preview panel
+- **`PreviewPanel`** - Handles error display and HTML rendering
+
+#### **4. State Management (Custom Hooks)**
+- **`useEditor`** - Centralizes all editor state and Handlebars compilation
+- **`useTheme`** - Manages theme state and localStorage persistence
 
 #### **2. Handlebars Integration**
 - **Custom Helpers**: `formatDate`, `eq`, `gt`, `lt`
@@ -97,6 +135,31 @@ Template (HBS) + Data (JSON) + Layout (HTML) + Styles (CSS)
 - **Editor Options**: Syntax highlighting, auto-completion, minimap disabled
 - **Keyboard Shortcuts**: Custom Ctrl+S handling to prevent browser defaults
 - **Theme Integration**: Dark/light theme support
+
+## 🎯 Code Quality & Maintainability
+
+### **Refactoring Benefits**
+
+The application has been **refactored from a monolithic 1000-line component** into a clean, maintainable architecture:
+
+- **Before**: Single file with mixed concerns (1000+ lines)
+- **After**: 9 focused components + 2 custom hooks + utilities (~93 lines main component)
+
+### **Architecture Principles**
+
+- **Single Responsibility**: Each component has one clear purpose
+- **Separation of Concerns**: UI, logic, and utilities are separate
+- **Props Down, Events Up**: Clean data flow between components
+- **Reusable Components**: Components can be shared and tested independently
+- **Custom Hooks**: Business logic extracted into reusable hooks
+
+### **Production Readiness**
+
+✅ **Maintainable**: Easy to debug, test, and modify  
+✅ **Scalable**: New features can be added without touching existing code  
+✅ **Professional**: Follows React best practices and industry standards  
+✅ **Team-Friendly**: Multiple developers can work on different components  
+✅ **Performance**: Better code splitting and optimization opportunities
 
 #### **4. CSS Injection System**
 - **Smart Placement**: Styles automatically inserted into `<head>` for layouts
@@ -237,6 +300,32 @@ useEffect(() => {
 - Node.js 18+ 
 - pnpm (recommended) or npm
 
+### **Project Structure**
+
+```
+HBS Parser/
+├── app/                    # Next.js app directory
+│   ├── page.tsx           # Main page component (93 lines)
+│   ├── layout.tsx         # Root layout
+│   └── globals.css        # Global styles
+├── components/             # Reusable UI components
+│   ├── layout/            # Layout components
+│   ├── editor/            # Editor components
+│   ├── preview/           # Preview components
+│   └── index.ts           # Component exports
+├── lib/                   # Utilities and hooks
+│   ├── hooks/             # Custom React hooks
+│   └── utils/             # Utility functions
+└── types/                 # TypeScript type definitions
+```
+
+### **Development Workflow**
+
+1. **Component Development**: Work on individual components in isolation
+2. **Hook Logic**: Business logic is centralized in custom hooks
+3. **State Management**: Clean data flow with props and event handlers
+4. **Testing**: Each component and hook can be tested independently
+
 ### **Installation**
 ```bash
 git clone https://github.com/ankurrokad/handlebar-parse.git
@@ -253,6 +342,13 @@ pnpm dev
 5. **Customize with CSS** for styling
 6. **Use Ctrl+S** to save your work
 7. **Toggle layout mode** as needed
+
+### **Component Development**
+
+- **Adding New Features**: Create new components in appropriate directories
+- **Modifying Logic**: Update custom hooks for business logic changes
+- **Styling Changes**: Modify component-specific styles or global CSS
+- **Testing**: Test individual components and hooks in isolation
 
 ## 🔧 Configuration
 
@@ -273,11 +369,24 @@ pnpm dev
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+### **Development Guidelines**
+
+1. **Fork the repository**
+2. **Create a feature branch**
+3. **Follow the component architecture**:
+   - UI changes → Modify components
+   - Logic changes → Update custom hooks
+   - Utility functions → Add to lib/utils
+4. **Test thoroughly** - Each component can be tested independently
+5. **Submit a pull request**
+
+### **Code Quality Standards**
+
+- **Single Responsibility**: Each component should have one clear purpose
+- **Props Interface**: Define clear TypeScript interfaces for all props
+- **Event Handling**: Use consistent event handler patterns
+- **Error Boundaries**: Implement proper error handling
+- **Performance**: Consider React.memo for expensive components
 
 ## 🆘 Support
 
