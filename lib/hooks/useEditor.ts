@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import Handlebars from 'handlebars'
+import { storageService } from '@/lib/storage'
 
 export interface EditorState {
   template: string
@@ -199,28 +200,28 @@ export const useEditor = () => {
     savePreferences()
   }
 
-  // Load saved data from localStorage on mount
+  // Load saved data from storage on mount
   useEffect(() => {
-    try {
-      const savedTemplate = localStorage.getItem('hbs-parser-template')
-      const savedData = localStorage.getItem('hbs-parser-data')
-      const savedLayout = localStorage.getItem('hbs-parser-layout')
-      const savedStyles = localStorage.getItem('hbs-parser-styles')
-      const savedUseLayout = localStorage.getItem('hbs-parser-useLayout')
-      
-      if (savedTemplate) setState(prev => ({ ...prev, template: savedTemplate }))
-      if (savedData) setState(prev => ({ ...prev, data: savedData }))
-      if (savedLayout) setState(prev => ({ ...prev, layout: savedLayout }))
-      if (savedStyles) setState(prev => ({ ...prev, styles: savedStyles }))
-      if (savedUseLayout) setState(prev => ({ ...prev, useLayout: savedUseLayout === 'true' }))
-      
-      setState(prev => ({ ...prev, lastSaved: new Date() }))
-    } catch (err) {
-      console.warn('Failed to load from localStorage:', err)
+    const loadSavedData = async () => {
+      try {
+        const savedData = await storageService.loadAll()
+        
+        if (savedData.template) setState(prev => ({ ...prev, template: savedData.template }))
+        if (savedData.data) setState(prev => ({ ...prev, data: savedData.data }))
+        if (savedData.layout) setState(prev => ({ ...prev, layout: savedData.layout }))
+        if (savedData.styles) setState(prev => ({ ...prev, styles: savedData.styles }))
+        if (savedData.useLayout !== undefined) setState(prev => ({ ...prev, useLayout: savedData.useLayout }))
+        
+        setState(prev => ({ ...prev, lastSaved: new Date() }))
+      } catch (err) {
+        console.warn('Failed to load from storage:', err)
+      }
     }
+    
+    loadSavedData()
   }, [])
 
-  const resetToDefaults = () => {
+  const resetToDefaults = async () => {
     if (confirm('Are you sure you want to reset all templates to defaults? This will clear your saved work.')) {
       const defaultState: EditorState = {
         template: `<div class="container">
@@ -330,32 +331,29 @@ export const useEditor = () => {
       
       setState(defaultState)
       
-      // Clear localStorage
+      // Clear storage
       try {
-        localStorage.removeItem('hbs-parser-template')
-        localStorage.removeItem('hbs-parser-data')
-        localStorage.removeItem('hbs-parser-layout')
-        localStorage.removeItem('hbs-parser-styles')
+        await storageService.clearAll()
       } catch (err) {
-        console.warn('Failed to clear localStorage:', err)
+        console.warn('Failed to clear storage:', err)
       }
     }
   }
 
-  // Auto-save to localStorage
-  const saveToStorage = (key: string, value: string) => {
+  // Auto-save to storage
+  const saveToStorage = async (key: string, value: string) => {
     try {
-      localStorage.setItem(key, value)
+      await storageService.saveFile(key, value)
       setState(prev => ({ ...prev, lastSaved: new Date() }))
     } catch (err) {
-      console.warn('Failed to save to localStorage:', err)
+      console.warn('Failed to save to storage:', err)
     }
   }
 
   // Save theme and layout preference
-  const savePreferences = () => {
+  const savePreferences = async () => {
     try {
-      localStorage.setItem('hbs-parser-useLayout', state.useLayout.toString())
+      await storageService.savePreferences(state.useLayout)
     } catch (err) {
       console.warn('Failed to save preferences:', err)
     }

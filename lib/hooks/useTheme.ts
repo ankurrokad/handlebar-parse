@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { storageService } from '@/lib/storage'
 
 export const useTheme = () => {
   const [isDarkTheme, setIsDarkTheme] = useState(true)
@@ -18,32 +19,36 @@ export const useTheme = () => {
     saveThemePreference(newTheme)
   }
 
-  const saveThemePreference = (theme: boolean) => {
+  const saveThemePreference = async (theme: boolean) => {
     try {
-      localStorage.setItem('hbs-parser-theme', theme ? 'dark' : 'light')
+      await storageService.saveTheme(theme ? 'dark' : 'light')
     } catch (err) {
       console.warn('Failed to save theme preference:', err)
     }
   }
 
-  // Load saved theme from localStorage on mount
+  // Load saved theme from storage on mount
   useEffect(() => {
-    try {
-      const savedTheme = localStorage.getItem('hbs-parser-theme')
-      if (savedTheme) {
-        const isDark = savedTheme === 'dark'
-        setIsDarkTheme(isDark)
-        
-        // Apply theme immediately
-        if (isDark) {
-          document.documentElement.classList.add('dark')
-        } else {
-          document.documentElement.classList.remove('dark')
+    const loadSavedTheme = async () => {
+      try {
+        const savedTheme = await storageService.getTheme()
+        if (savedTheme) {
+          const isDark = savedTheme === 'dark'
+          setIsDarkTheme(isDark)
+          
+          // Apply theme immediately
+          if (isDark) {
+            document.documentElement.classList.add('dark')
+          } else {
+            document.documentElement.classList.remove('dark')
+          }
         }
+      } catch (err) {
+        console.warn('Failed to load theme preference:', err)
       }
-    } catch (err) {
-      console.warn('Failed to load theme preference:', err)
     }
+    
+    loadSavedTheme()
   }, [])
 
   // Set initial theme on mount

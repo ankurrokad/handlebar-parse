@@ -83,7 +83,8 @@ lib/
 ### **State Management Architecture**
 
 - **`useEditor` Hook**: Centralizes all editor state and Handlebars compilation logic
-- **`useTheme` Hook**: Manages theme state and localStorage persistence
+- **`useTheme` Hook**: Manages theme state and storage persistence
+- **`useStorage` Hook**: Manages storage provider switching and configuration
 - **Component Props**: Clean data flow with props down, events up pattern
 - **Separation of Concerns**: UI components focus on rendering, hooks handle logic
 
@@ -167,7 +168,9 @@ The application has been **refactored from a monolithic 1000-line component** in
 - **Real-time Updates**: CSS changes immediately reflected in preview
 
 #### **5. Persistence Layer**
-- **localStorage Integration**: Automatic saving of all content types
+- **Flexible Storage Architecture**: Service-based storage with multiple backend support
+- **Storage Providers**: localStorage (default), IndexedDB, MongoDB (coming soon), Supabase (coming soon)
+- **Automatic Data Migration**: Seamless switching between storage providers
 - **Preference Storage**: Theme and layout settings persisted
 - **Auto-save Triggers**: Save on every content change
 - **Manual Save**: Ctrl+S shortcut for immediate persistence
