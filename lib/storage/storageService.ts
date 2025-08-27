@@ -2,6 +2,7 @@ import { StorageService, StorageProvider, StorageConfig, Template } from './type
 import { LocalStorageService } from './localStorageService'
 import { IndexedDBService } from './indexedDBService'
 import { SupabaseService } from './supabaseService'
+import { logger } from '../utils/logger'
 
 export class StorageServiceManager {
   private static instance: StorageServiceManager
@@ -62,9 +63,9 @@ export class StorageServiceManager {
       this.currentService = newService
       this.config = { provider, options }
 
-      console.log(`Switched to ${provider} storage provider`)
+      logger.log(`Switched to ${provider} storage provider`)
     } catch (error) {
-      console.error(`Failed to switch to ${provider} storage:`, error)
+      logger.error(`Failed to switch to ${provider} storage:`, error)
       throw error
     }
   }
@@ -85,10 +86,10 @@ export class StorageServiceManager {
       const data = await fromService.loadAll()
       if (Object.keys(data).length > 0) {
         await toService.saveAll(data)
-        console.log('Data migrated successfully')
+        logger.log('Data migrated successfully')
       }
     } catch (error) {
-      console.warn('Failed to migrate data:', error)
+      logger.warn('Failed to migrate data:', error)
       // Don't throw here - we want to continue with the new service even if migration fails
     }
   }

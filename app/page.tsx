@@ -7,6 +7,7 @@ import { Loading } from '@/components/loading'
 import { Header, Background, MainContent } from '@/components'
 import { useEditor, useTheme, useSupabase } from '@/lib/hooks'
 import { handleCopyContent } from '@/lib/utils/fileUtils'
+import { logger } from '@/lib/utils/logger'
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'template' | 'data' | 'layout' | 'styles'>('layout')
@@ -18,9 +19,9 @@ export default function Home() {
   // Auto-switch to Supabase when connected
   useEffect(() => {
     if (isConnected && !isSupabaseActive) {
-      console.log('🔄 Auto-switching to Supabase storage...')
+      logger.log('🔄 Auto-switching to Supabase storage...')
       switchToSupabase().catch(error => {
-        console.warn('Failed to auto-switch to Supabase:', error)
+        logger.warn('Failed to auto-switch to Supabase:', error)
       })
     }
   }, [isConnected, isSupabaseActive, switchToSupabase])

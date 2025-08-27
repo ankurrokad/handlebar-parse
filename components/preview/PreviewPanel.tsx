@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Code2, Copy } from 'lucide-react'
 import { handleCopyHtml } from '@/lib/utils/fileUtils'
+import DOMPurify from 'dompurify'
 
 interface PreviewPanelProps {
   compiledHtml: string
@@ -70,7 +71,7 @@ export const PreviewPanel = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className={`prose max-w-none ${isDarkTheme ? 'prose-invert prose-pre:bg-[#161616] prose-pre:text-gray-300' : ''} p-4`}
-              dangerouslySetInnerHTML={{ __html: compiledHtml }}
+                             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(compiledHtml) }}
             />
           )}
         </AnimatePresence>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { StorageServiceManager } from '../storage/storageService'
 import { supabase } from '../supabase'
+import { logger } from '../utils/logger'
 
 export const useSupabase = () => {
   const [isConnected, setIsConnected] = useState(false)
@@ -45,7 +46,7 @@ export const useSupabase = () => {
       await storageManager.switchProvider('supabase')
       
       setIsConnected(true)
-      console.log('Successfully switched to Supabase storage')
+      logger.log('Successfully switched to Supabase storage')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to switch to Supabase')
       throw err

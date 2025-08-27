@@ -1,5 +1,6 @@
 import { StorageService, Template, StorageData } from './types'
 import { supabase } from '../supabase/client'
+import { logger } from '../utils/logger'
 
 export class SupabaseService implements StorageService {
   private readonly TEMPLATES_KEY = 'templates'
@@ -59,7 +60,7 @@ export class SupabaseService implements StorageService {
       // Update last saved timestamp
       localStorage.setItem(this.LAST_SAVED_KEY, new Date().toISOString())
     } catch (error) {
-      console.error('Failed to save templates to Supabase:', error)
+      logger.error('Failed to save templates to Supabase:', error)
       throw error
     }
   }
@@ -73,7 +74,7 @@ export class SupabaseService implements StorageService {
         .order('updated_at', { ascending: false })
 
       if (error) {
-        console.error('Error fetching templates:', error)
+        logger.error('Error fetching templates:', error)
         return null
       }
 
@@ -95,7 +96,7 @@ export class SupabaseService implements StorageService {
 
       return { templates, currentTemplateId }
     } catch (error) {
-      console.error('Failed to get templates from Supabase:', error)
+      logger.error('Failed to get templates from Supabase:', error)
       return null
     }
   }
@@ -190,7 +191,7 @@ export class SupabaseService implements StorageService {
   // Private helper methods
   private async saveTemplateToSupabase(template: Template): Promise<Template | null> {
     try {
-      console.log('Attempting to save template:', {
+      logger.log('Attempting to save template:', {
         name: template.name,
         hasId: !template.id.startsWith('temp-'),
         contentLength: template.template.length
@@ -204,7 +205,7 @@ export class SupabaseService implements StorageService {
         .limit(1)
 
       if (searchError) {
-        console.error('Error searching for existing template:', searchError)
+        logger.error('Error searching for existing template:', searchError)
         throw searchError
       }
 
@@ -217,18 +218,18 @@ export class SupabaseService implements StorageService {
         if (template.id.startsWith('temp-')) {
           templateId = existing.id
           isUpdate = true
-          console.log(`🔄 Updating existing template: ${template.name} (ID: ${templateId})`)
+          logger.log(`🔄 Updating existing template: ${template.name} (ID: ${templateId})`)
         } else if (template.id !== existing.id) {
           // Different ID but same name - this shouldn't happen, but let's handle it
-          console.warn(`⚠️ Template name conflict: ${template.name}`)
+          logger.warn(`⚠️ Template name conflict: ${template.name}`)
         }
       } else if (template.id.startsWith('temp-')) {
         // New template - let Supabase generate the ID
         templateId = undefined
-        console.log(`🆕 Creating new template: ${template.name}`)
+                  logger.log(`🆕 Creating new template: ${template.name}`)
       }
 
-      console.log(`📝 Final upsert data:`, {
+      logger.log(`📝 Final upsert data:`, {
         id: templateId,
         name: template.name,
         isUpdate,
@@ -249,7 +250,7 @@ export class SupabaseService implements StorageService {
         .select()
 
       if (error) {
-        console.error('Supabase error details:', {
+        logger.error('Supabase error details:', {
           message: error.message,
           details: error.details,
           hint: error.hint,
@@ -276,7 +277,7 @@ export class SupabaseService implements StorageService {
 
       return null
     } catch (error) {
-      console.error('Unexpected error in saveTemplateToSupabase:', error)
+      logger.error('Unexpected error in saveTemplateToSupabase:', error)
       throw error
     }
   }
@@ -288,7 +289,7 @@ export class SupabaseService implements StorageService {
       .neq('id', '') // Delete all records
 
     if (error) {
-      console.error('Error clearing templates from Supabase:', error)
+      logger.error('Error clearing templates from Supabase:', error)
       throw error
     }
   }
