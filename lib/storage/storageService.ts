@@ -1,6 +1,7 @@
 import { StorageService, StorageProvider, StorageConfig, Template } from './types'
 import { LocalStorageService } from './localStorageService'
 import { IndexedDBService } from './indexedDBService'
+import { SupabaseService } from './supabaseService'
 
 export class StorageServiceManager {
   private static instance: StorageServiceManager
@@ -45,8 +46,8 @@ export class StorageServiceManager {
           // TODO: Implement MongoDB service
           throw new Error('MongoDB storage not yet implemented')
         case 'supabase':
-          // TODO: Implement Supabase service
-          throw new Error('Supabase storage not yet implemented')
+          newService = new SupabaseService()
+          break
         case 'custom':
           // TODO: Allow custom storage service injection
           throw new Error('Custom storage not yet implemented')

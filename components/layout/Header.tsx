@@ -8,6 +8,7 @@ interface HeaderProps {
   isPlaying: boolean
   useLayout: boolean
   isDarkTheme: boolean
+  isSupabaseActive: boolean
   templates: Template[]
   currentTemplateId: string
   onToggleAutoPlay: () => void
@@ -27,6 +28,7 @@ export const Header = ({
   isPlaying,
   useLayout,
   isDarkTheme,
+  isSupabaseActive,
   templates,
   currentTemplateId,
   onToggleAutoPlay,
@@ -96,6 +98,18 @@ export const Header = ({
         >
           {isDarkTheme ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
         </button>
+        
+
+        
+        {/* Supabase Status Indicator */}
+        <div className="flex items-center gap-1">
+          <div className={`w-2 h-2 rounded-full ${
+            isSupabaseActive ? 'bg-green-500' : 'bg-gray-500'
+          }`} />
+          <span className="text-xs text-gray-500">
+            {isSupabaseActive ? 'DB' : 'Local'}
+          </span>
+        </div>
         
         <button
           onClick={onResetToDefaults}

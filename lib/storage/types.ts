@@ -6,6 +6,7 @@ export interface Template {
   data: string
   layout: string
   styles: string
+  description?: string
   createdAt: Date
   updatedAt: Date
 }

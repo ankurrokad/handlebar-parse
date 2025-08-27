@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Suspense } from 'react'
 import { Loading } from '@/components/loading'
 import { Header, Background, MainContent } from '@/components'
-import { useEditor, useTheme } from '@/lib/hooks'
+import { useEditor, useTheme, useSupabase } from '@/lib/hooks'
 import { handleCopyContent } from '@/lib/utils/fileUtils'
 
 export default function Home() {
@@ -13,6 +13,20 @@ export default function Home() {
   
   const editor = useEditor()
   const { isDarkTheme, toggleTheme } = useTheme()
+  const { isConnected, switchToSupabase, isSupabaseActive } = useSupabase()
+
+  // Auto-switch to Supabase when connected
+  useEffect(() => {
+    if (isConnected && !isSupabaseActive) {
+      console.log('🔄 Auto-switching to Supabase storage...')
+      switchToSupabase().catch(error => {
+        console.warn('Failed to auto-switch to Supabase:', error)
+      })
+    }
+  }, [isConnected, isSupabaseActive, switchToSupabase])
+
+  // Note: Templates are automatically saved when using Supabase storage
+  // The storage service handles persistence automatically
 
   const handleTemplateChange = (value: string | undefined) => {
     const newValue = value || ''
@@ -60,6 +74,7 @@ export default function Home() {
           isPlaying={editor.isPlaying}
           useLayout={editor.useLayout}
           isDarkTheme={isDarkTheme}
+          isSupabaseActive={isSupabaseActive}
           templates={editor.templates}
           currentTemplateId={editor.currentTemplateId}
           onToggleAutoPlay={editor.toggleAutoPlay}
