@@ -127,6 +127,7 @@ export const SettingsModalFormik = ({ isOpen, onClose }: SettingsModalProps) => 
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     const values: UserSettings = {
+      ...settings, // Keep existing settings
       weazyPrintUrl: formData.get('weazyPrintUrl') as string || ''
     }
     handleSubmit(values)
