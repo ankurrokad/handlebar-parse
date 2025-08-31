@@ -1,8 +1,10 @@
 'use client'
 
-import { Code2, Play, Square, Sun, Moon, Layers, RotateCcw } from 'lucide-react'
+import { Code2, Play, Square, Sun, Moon, Layers, RotateCcw, Settings } from 'lucide-react'
 import { TemplateSelector } from '@/components/editor/TemplateSelector'
 import { Template } from '@/lib/hooks/useEditor'
+import { SettingsModal } from '@/components/ui/SettingsModal'
+import { useState } from 'react'
 
 interface HeaderProps {
   isPlaying: boolean
@@ -41,6 +43,8 @@ export const Header = ({
   onExportTemplate,
   onImportTemplate
 }: HeaderProps) => {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
   return (
     <header className="h-8 bg-[#0A0A0A] border-b border-[#333333] flex items-center justify-between px-2 select-none" style={{ height: '32px' }}>
       <div className="flex items-center space-x-3">
@@ -104,7 +108,21 @@ export const Header = ({
         >
           <RotateCcw className="h-3 w-3" />
         </button>
+        
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          className="p-1 rounded text-gray-500 hover:bg-[#161616]"
+          title="Settings"
+        >
+          <Settings className="h-3 w-3" />
+        </button>
       </div>
+      
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </header>
   )
 }
