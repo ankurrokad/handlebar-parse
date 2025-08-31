@@ -1,11 +1,12 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { Code2, Copy, Printer } from 'lucide-react'
+import { Code2, Copy, Printer, Mail } from 'lucide-react'
 import { handleCopyHtml } from '@/lib/utils/fileUtils'
 import { useHtmlSanitizer, useSettings } from '@/lib/hooks'
 import { useEffect, useState } from 'react'
 import { printWithWeazyPrint } from '@/lib/utils/weazyPrintUtils'
+import { EmailModal } from '@/components/ui/EmailModal'
 
 interface PreviewPanelProps {
   compiledHtml: string
@@ -20,6 +21,7 @@ export const PreviewPanel = ({
 }: PreviewPanelProps) => {
   const [sanitizedHtml, setSanitizedHtml] = useState<string>('')
   const [isPrinting, setIsPrinting] = useState(false)
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const { sanitizeHtml, isClient } = useHtmlSanitizer()
   const { settings } = useSettings()
 
@@ -83,6 +85,16 @@ export const PreviewPanel = ({
               <Printer className={`h-3 w-3 ${isPrinting ? 'animate-pulse' : ''}`} />
             </button>
           )}
+
+          {/* Email Button - Show if SMTP is configured or as fallback */}
+          <button
+            onClick={() => setIsEmailModalOpen(true)}
+            disabled={!compiledHtml}
+            className="p-1 rounded text-gray-500 hover:bg-[#161616] hover:text-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Send HTML content via email"
+          >
+            <Mail className="h-3 w-3" />
+          </button>
           
           {/* Copy HTML Button */}
           <button
@@ -125,6 +137,13 @@ export const PreviewPanel = ({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Email Modal */}
+      <EmailModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        htmlContent={compiledHtml}
+      />
     </div>
   )
 }

@@ -2,10 +2,22 @@ import { useState, useEffect } from 'react'
 
 export interface UserSettings {
   weazyPrintUrl: string
+  smtpHost: string
+  smtpPort: number
+  smtpUsername: string
+  smtpPassword: string
+  fromEmail: string
+  fromName: string
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
-  weazyPrintUrl: ''
+  weazyPrintUrl: '',
+  smtpHost: '',
+  smtpPort: 587,
+  smtpUsername: '',
+  smtpPassword: '',
+  fromEmail: '',
+  fromName: ''
 }
 
 const SETTINGS_STORAGE_KEY = 'hbs-parser-user-settings'

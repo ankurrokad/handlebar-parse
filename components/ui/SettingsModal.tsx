@@ -38,7 +38,13 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     const values: UserSettings = {
-      weazyPrintUrl: formData.get('weazyPrintUrl') as string || ''
+      weazyPrintUrl: formData.get('weazyPrintUrl') as string || '',
+      smtpHost: formData.get('smtpHost') as string || '',
+      smtpPort: parseInt(formData.get('smtpPort') as string) || 587,
+      smtpUsername: formData.get('smtpUsername') as string || '',
+      smtpPassword: formData.get('smtpPassword') as string || '',
+      fromEmail: formData.get('fromEmail') as string || '',
+      fromName: formData.get('fromName') as string || ''
     }
     handleSubmit(values)
   }
@@ -78,6 +84,101 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
             <p className="mt-1 text-xs text-gray-500">
               The URL endpoint for WeazyPrint API
             </p>
+          </div>
+
+          {/* SMTP Settings Section */}
+          <div className="border-t border-[#333333] pt-4">
+            <h3 className="text-sm font-medium text-gray-300 mb-3">Email Settings (SMTP)</h3>
+            
+            {/* SMTP Host */}
+            <div className="mb-3">
+              <label htmlFor="smtpHost" className="block text-sm font-medium text-gray-300 mb-2">
+                SMTP Host
+              </label>
+              <input
+                type="text"
+                id="smtpHost"
+                name="smtpHost"
+                defaultValue={settings.smtpHost}
+                placeholder="smtp.gmail.com"
+                className="w-full px-3 py-2 bg-[#2A2A2A] border border-[#444444] rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0070F3] focus:border-transparent"
+              />
+            </div>
+
+            {/* SMTP Port */}
+            <div className="mb-3">
+              <label htmlFor="smtpPort" className="block text-sm font-medium text-gray-300 mb-2">
+                SMTP Port
+              </label>
+              <input
+                type="number"
+                id="smtpPort"
+                name="smtpPort"
+                defaultValue={settings.smtpPort}
+                placeholder="587"
+                className="w-full px-3 py-2 bg-[#2A2A2A] border border-[#444444] rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0070F3] focus:border-transparent"
+              />
+            </div>
+
+            {/* SMTP Username */}
+            <div className="mb-3">
+              <label htmlFor="smtpUsername" className="block text-sm font-medium text-gray-300 mb-2">
+                SMTP Username
+              </label>
+              <input
+                type="text"
+                id="smtpUsername"
+                name="smtpUsername"
+                defaultValue={settings.smtpUsername}
+                placeholder="your-email@gmail.com"
+                className="w-full px-3 py-2 bg-[#2A2A2A] border border-[#444444] rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0070F3] focus:border-transparent"
+              />
+            </div>
+
+            {/* SMTP Password */}
+            <div className="mb-3">
+              <label htmlFor="smtpPassword" className="block text-sm font-medium text-gray-300 mb-2">
+                SMTP Password
+              </label>
+              <input
+                type="password"
+                id="smtpPassword"
+                name="smtpPassword"
+                defaultValue={settings.smtpPassword}
+                placeholder="your-app-password"
+                className="w-full px-3 py-2 bg-[#2A2A2A] border border-[#444444] rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0070F3] focus:border-transparent"
+              />
+            </div>
+
+            {/* From Email */}
+            <div className="mb-3">
+              <label htmlFor="fromEmail" className="block text-sm font-medium text-gray-300 mb-2">
+                From Email
+              </label>
+              <input
+                type="email"
+                id="fromEmail"
+                name="fromEmail"
+                defaultValue={settings.fromEmail}
+                placeholder="sender@example.com"
+                className="w-full px-3 py-2 bg-[#2A2A2A] border border-[#444444] rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0070F3] focus:border-transparent"
+              />
+            </div>
+
+            {/* From Name */}
+            <div className="mb-3">
+              <label htmlFor="fromName" className="block text-sm font-medium text-gray-300 mb-2">
+                From Name
+              </label>
+              <input
+                type="text"
+                id="fromName"
+                name="fromName"
+                defaultValue={settings.fromName}
+                placeholder="Your Name"
+                className="w-full px-3 py-2 bg-[#2A2A2A] border border-[#444444] rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0070F3] focus:border-transparent"
+              />
+            </div>
           </div>
 
           {/* Action Buttons */}
