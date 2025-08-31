@@ -1,10 +1,11 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { Code2, Copy } from 'lucide-react'
+import { Code2, Copy, Printer } from 'lucide-react'
 import { handleCopyHtml } from '@/lib/utils/fileUtils'
-import { useHtmlSanitizer } from '@/lib/hooks'
+import { useHtmlSanitizer, useSettings } from '@/lib/hooks'
 import { useEffect, useState } from 'react'
+import { printWithWeazyPrint } from '@/lib/utils/weazyPrintUtils'
 
 interface PreviewPanelProps {
   compiledHtml: string
@@ -18,13 +19,35 @@ export const PreviewPanel = ({
   isDarkTheme
 }: PreviewPanelProps) => {
   const [sanitizedHtml, setSanitizedHtml] = useState<string>('')
+  const [isPrinting, setIsPrinting] = useState(false)
   const { sanitizeHtml, isClient } = useHtmlSanitizer()
+  const { settings } = useSettings()
 
   useEffect(() => {
     if (compiledHtml) {
       sanitizeHtml(compiledHtml).then(setSanitizedHtml)
     }
   }, [compiledHtml, sanitizeHtml])
+
+  const handlePrint = async () => {
+    if (!settings.weazyPrintUrl) {
+      alert('Please configure WeazyPrint URL in settings first.')
+      return
+    }
+
+    setIsPrinting(true)
+    try {
+      const result = await printWithWeazyPrint(settings.weazyPrintUrl, compiledHtml)
+      if (!result.success) {
+        alert(`Print failed: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Print error:', error)
+      alert('Failed to print. Please check your WeazyPrint configuration.')
+    } finally {
+      setIsPrinting(false)
+    }
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -43,6 +66,22 @@ export const PreviewPanel = ({
             <div className="text-xs px-2 py-0.5 rounded bg-[#450A0A] border border-red-900/50 text-red-500">
               Error
             </div>
+          )}
+          
+          {/* Print Button - Only show if WeazyPrint URL is configured */}
+          {settings.weazyPrintUrl && (
+            <button
+              onClick={handlePrint}
+              disabled={isPrinting || !compiledHtml}
+              className={`p-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                isPrinting 
+                  ? 'text-[#0070F3] bg-[#0070F3]/10' 
+                  : 'text-gray-500 hover:bg-[#161616] hover:text-gray-300'
+              }`}
+              title={isPrinting ? "Printing..." : "Print to PDF using WeazyPrint"}
+            >
+              <Printer className={`h-3 w-3 ${isPrinting ? 'animate-pulse' : ''}`} />
+            </button>
           )}
           
           {/* Copy HTML Button */}
