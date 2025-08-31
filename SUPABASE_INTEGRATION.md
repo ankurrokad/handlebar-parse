@@ -17,13 +17,13 @@ This document explains how to use the Supabase integration for saving and loadin
 - **Purpose**: Implements the `StorageService` interface for Supabase
 - **Features**:
   - Template CRUD operations in Supabase
-  - Fallback to localStorage for non-template data
-  - Automatic data migration when switching providers
+  - All data stored exclusively in Supabase
+  - Automatic data persistence in Supabase
   - Error handling and logging
 
 ### 3. Storage Service Manager Updates
 - **File**: `lib/storage/storageService.ts`
-- **Purpose**: Manages switching between different storage providers
+- **Purpose**: Manages Supabase storage operations
 - **Features**:
   - Support for Supabase provider
   - Automatic data migration between providers
@@ -169,8 +169,8 @@ When you switch to Supabase:
 
 1. **Automatic migration**: The system automatically migrates existing templates
 2. **Data preservation**: All template data is preserved during the switch
-3. **Fallback support**: Non-template data (theme, preferences) remains in localStorage
-4. **Seamless switching**: You can switch back to localStorage if needed
+3. **Exclusive Supabase storage**: All data (templates, theme, preferences) stored in Supabase
+4. **No fallback options**: App exclusively uses Supabase for all storage needs
 
 ## Error Handling
 

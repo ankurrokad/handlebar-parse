@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { StorageServiceManager } from '../storage/storageService'
-import { supabase } from '../supabase'
+import { supabase } from '../supabase/client'
 import { logger } from '../utils/logger'
 
 export const useSupabase = () => {
@@ -37,36 +36,11 @@ export const useSupabase = () => {
     }
   }
 
-  const switchToSupabase = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      
-      const storageManager = StorageServiceManager.getInstance()
-      await storageManager.switchProvider('supabase')
-      
-      setIsConnected(true)
-      logger.log('Successfully switched to Supabase storage')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to switch to Supabase')
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const getCurrentProvider = () => {
-    const storageManager = StorageServiceManager.getInstance()
-    return storageManager.getCurrentProvider()
-  }
-
   return {
     isConnected,
     isLoading,
     error,
-    switchToSupabase,
     checkConnection,
-    getCurrentProvider,
-    isSupabaseActive: getCurrentProvider() === 'supabase'
+    isSupabaseActive: true // Always true since we only use Supabase
   }
 }

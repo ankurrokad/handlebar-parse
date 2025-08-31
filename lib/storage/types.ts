@@ -54,7 +54,7 @@ export interface StorageService {
   loadAll(): Promise<Partial<StorageData>>
 }
 
-export type StorageProvider = 'localStorage' | 'indexedDB' | 'mongodb' | 'supabase' | 'custom'
+export type StorageProvider = 'supabase'
 
 export interface StorageConfig {
   provider: StorageProvider

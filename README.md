@@ -9,7 +9,7 @@ A modern, production-ready web application for real-time Handlebars template dev
 - **Live HTML Preview** - See results immediately in a responsive preview panel
 - **Layout System** - Support for Handlebars layouts with `{{{body}}}` placeholder
 - **Custom CSS Styling** - Dedicated styles tab for template customization
-- **Auto-save** - Automatic localStorage persistence for all content
+- **Auto-save** - Automatic Supabase persistence for all content
 - **Manual Save** - Ctrl+S shortcut for immediate saving
 
 ### **Editor Features**
@@ -30,7 +30,7 @@ A modern, production-ready web application for real-time Handlebars template dev
 
 ### **Advanced Features**
 - **Custom Handlebars Helpers** - Built-in helpers for common operations
-- **Persistent Storage** - All work automatically saved to localStorage
+- **Persistent Storage** - All work automatically saved to Supabase
 - **Reset to Defaults** - Quick restoration of sample templates
 - **Theme Persistence** - User preferences saved across sessions
 - **Responsive Preview** - Mobile-friendly HTML rendering
@@ -78,7 +78,7 @@ lib/
 3. **Handlebars Compilation** → Template + Data + Layout compiled together
 4. **CSS Injection** → Custom styles automatically injected into output
 5. **HTML Rendering** → Final HTML displayed in preview panel
-6. **Auto-save** → All content automatically persisted to localStorage
+6. **Auto-save** → All content automatically persisted to Supabase
 
 ### **State Management Architecture**
 
@@ -123,7 +123,7 @@ Template (HBS) + Data (JSON) + Layout (HTML) + Styles (CSS)
 
 #### **4. State Management (Custom Hooks)**
 - **`useEditor`** - Centralizes all editor state and Handlebars compilation
-- **`useTheme`** - Manages theme state and localStorage persistence
+- **`useTheme`** - Manages theme state and Supabase persistence
 
 #### **2. Handlebars Integration**
 - **Custom Helpers**: `formatDate`, `eq`, `gt`, `lt`
@@ -169,8 +169,8 @@ The application has been **refactored from a monolithic 1000-line component** in
 
 #### **5. Persistence Layer**
 - **Flexible Storage Architecture**: Service-based storage with multiple backend support
-- **Storage Providers**: localStorage (default), IndexedDB, MongoDB (coming soon), Supabase (coming soon)
-- **Automatic Data Migration**: Seamless switching between storage providers
+- **Storage Provider**: Supabase (exclusive)
+- **Automatic Data Migration**: Seamless data persistence in Supabase
 - **Preference Storage**: Theme and layout settings persisted
 - **Auto-save Triggers**: Save on every content change
 - **Manual Save**: Ctrl+S shortcut for immediate persistence
@@ -202,7 +202,7 @@ components/
 - **Code Editor**: Monaco Editor (VS Code engine)
 - **Templating**: Handlebars.js for template compilation
 - **Animations**: Framer Motion for smooth transitions
-- **State Management**: React hooks with localStorage persistence
+- **State Management**: React hooks with Supabase persistence
 - **Build Tool**: Webpack with custom configurations
 
 ### **Key Functions & Methods**
@@ -367,7 +367,7 @@ pnpm dev
 ## 📱 Browser Support
 
 - **Modern Browsers**: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
-- **Features**: ES2020, CSS Grid, Flexbox, localStorage
+- **Features**: ES2020, CSS Grid, Flexbox, Supabase
 - **Fallbacks**: Graceful degradation for older browsers
 
 ## 🤝 Contributing

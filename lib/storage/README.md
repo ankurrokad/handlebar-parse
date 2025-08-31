@@ -1,22 +1,21 @@
 # Storage Service Architecture
 
-This directory contains a flexible, service-based storage architecture that allows the HBS Parser app to easily switch between different storage backends.
+This directory contains the storage architecture for the HBS Parser app, which exclusively uses Supabase as the storage backend.
 
 ## 🏗️ Architecture Overview
 
-The storage system is built around three main concepts:
+The storage system is built around a single, focused concept:
 
 1. **Storage Interface** - Abstract contract for all storage operations
-2. **Storage Implementations** - Concrete implementations for different backends
-3. **Storage Service Manager** - Central service that can switch between implementations
+2. **Supabase Implementation** - Concrete implementation for Supabase backend
+3. **Storage Service Manager** - Central service that manages Supabase storage
 
 ## 📁 File Structure
 
 ```
 lib/storage/
 ├── types.ts              # Storage interfaces and types
-├── localStorageService.ts # localStorage implementation
-├── indexedDBService.ts   # IndexedDB implementation
+├── supabaseService.ts    # Supabase implementation
 ├── storageService.ts     # Main service manager
 ├── index.ts             # Public exports
 └── README.md            # This documentation
@@ -74,21 +73,6 @@ await storageService.saveTemplate('<h1>{{title}}</h1>')
 const allData = await storageService.loadAll()
 ```
 
-### Switching Storage Providers
-
-```typescript
-import { storageService } from '@/lib/storage'
-
-// Switch to IndexedDB
-await storageService.switchProvider('indexedDB')
-
-// Switch to localStorage
-await storageService.switchProvider('localStorage')
-
-// Get current provider
-const current = storageService.getCurrentProvider() // 'localStorage' | 'indexedDB'
-```
-
 ### Using the Storage Hook
 
 ```typescript
@@ -96,21 +80,19 @@ import { useStorage } from '@/lib/hooks'
 
 function MyComponent() {
   const { 
-    currentProvider, 
     isLoading, 
     error, 
-    switchStorageProvider 
+    clearStorage 
   } = useStorage()
 
-  const handleSwitch = async () => {
-    await switchStorageProvider('indexedDB')
+  const handleClear = async () => {
+    await clearStorage()
   }
 
   return (
     <div>
-      <p>Current: {currentProvider}</p>
-      <button onClick={handleSwitch} disabled={isLoading}>
-        Switch to IndexedDB
+      <button onClick={handleClear} disabled={isLoading}>
+        Clear Storage
       </button>
       {error && <p>Error: {error}</p>}
     </div>
@@ -118,183 +100,42 @@ function MyComponent() {
 }
 ```
 
-## 🔄 Available Storage Providers
+## 🔄 Storage Provider
 
-### 1. LocalStorage (Default)
-- **Implementation**: `LocalStorageService`
-- **Pros**: Simple, fast, no setup required
-- **Cons**: Limited storage (5-10MB), data lost when browser data is cleared
-- **Use Case**: Default storage, development, simple projects
-
-### 2. IndexedDB
-- **Implementation**: `IndexedDBService`
-- **Pros**: Large storage capacity, persistent, structured data
-- **Cons**: More complex, async operations
-- **Use Case**: Large projects, offline-first apps, better persistence
-
-### 3. MongoDB (Coming Soon)
-- **Implementation**: `MongoDBService`
-- **Pros**: Cloud storage, cross-device sync, backup
-- **Cons**: Requires setup, network dependency
-- **Use Case**: Production apps, team collaboration, cross-device sync
-
-### 4. Supabase (Coming Soon)
+### Supabase (Exclusive)
 - **Implementation**: `SupabaseService`
-- **Pros**: Real-time sync, authentication, built-in backend
+- **Pros**: Real-time sync, authentication, built-in backend, cloud storage, cross-device sync
 - **Cons**: Requires Supabase account, network dependency
-- **Use Case**: Real-time collaboration, user accounts, production apps
-
-## 🛠️ Adding New Storage Providers
-
-To add a new storage provider:
-
-1. **Create the implementation**:
-```typescript
-// lib/storage/myCustomService.ts
-import { StorageService } from './types'
-
-export class MyCustomService implements StorageService {
-  // Implement all required methods
-  async saveFile(key: string, value: string): Promise<void> {
-    // Your implementation
-  }
-  
-  // ... implement all other methods
-}
-```
-
-2. **Add to the service manager**:
-```typescript
-// lib/storage/storageService.ts
-import { MyCustomService } from './myCustomService'
-
-// In the switchProvider method:
-case 'myCustom':
-  newService = new MyCustomService()
-  break
-```
-
-3. **Update types**:
-```typescript
-// lib/storage/types.ts
-export type StorageProvider = 'localStorage' | 'indexedDB' | 'mongodb' | 'supabase' | 'myCustom'
-```
+- **Use Case**: Production app with real-time collaboration, user accounts, cross-device sync
 
 ## 🔧 Configuration
 
-Storage providers can accept configuration options:
+The app automatically configures Supabase storage:
 
 ```typescript
-// Switch with options
-await storageService.switchProvider('mongodb', {
-  connectionString: 'mongodb://localhost:27017',
-  database: 'hbs-parser',
-  collection: 'templates'
-})
-
-// Get current config
-const config = storageService.getConfig()
-console.log(config.provider, config.options)
+// The storage service automatically uses Supabase
+const storageManager = StorageServiceManager.getInstance()
+const currentProvider = storageManager.getCurrentProvider() // Always 'supabase'
 ```
 
 ## 📊 Data Migration
 
-When switching between storage providers, the system automatically migrates existing data:
+The system automatically handles data persistence through Supabase:
 
 ```typescript
-// This will:
-// 1. Load all data from current provider
-// 2. Switch to new provider
-// 3. Save all data to new provider
-await storageService.switchProvider('indexedDB')
+// All data is automatically saved to Supabase
+await storageService.saveTemplate('<h1>{{title}}</h1>')
+await storageService.saveData('{"title": "Hello World"}')
 ```
 
-## 🎯 Best Practices
+## 🚫 Removed Features
 
-### 1. Error Handling
-```typescript
-try {
-  await storageService.saveFile('key', 'value')
-} catch (err) {
-  console.error('Storage failed:', err)
-  // Fallback to localStorage or show user message
-}
-```
+The following storage options have been removed to simplify the app:
 
-### 2. Async Operations
-```typescript
-// All storage operations are async
-const saveData = async () => {
-  await storageService.saveAll({
-    template: '{{title}}',
-    data: '{"title": "Hello"}'
-  })
-}
-```
+- **LocalStorage**: No longer available
+- **IndexedDB**: No longer available  
+- **MongoDB**: No longer available
+- **Custom Storage**: No longer available
+- **Storage Provider Switching**: No longer available
 
-### 3. Provider Switching
-```typescript
-// Always handle provider switching gracefully
-const switchProvider = async (provider: StorageProvider) => {
-  try {
-    await storageService.switchProvider(provider)
-    // Success - data migrated automatically
-  } catch (err) {
-    // Handle failure - maybe fallback to localStorage
-    console.error('Provider switch failed:', err)
-  }
-}
-```
-
-## 🧪 Testing
-
-The storage service can be easily mocked for testing:
-
-```typescript
-// Mock storage service
-const mockStorageService = {
-  saveFile: jest.fn(),
-  getFile: jest.fn(),
-  // ... other methods
-}
-
-// Use in tests
-jest.mock('@/lib/storage', () => ({
-  storageService: mockStorageService
-}))
-```
-
-## 🚀 Future Enhancements
-
-- [ ] **MongoDB Service**: Cloud storage with user authentication
-- [ ] **Supabase Service**: Real-time sync and backend services
-- [ ] **Encryption**: Data encryption for sensitive templates
-- [ ] **Compression**: Data compression for large templates
-- [ ] **Backup/Restore**: Export/import storage data
-- [ ] **Sync**: Cross-device synchronization
-- [ ] **Offline Support**: Offline-first storage strategies
-
-## 📝 Migration from Direct localStorage
-
-The app has been migrated from direct localStorage calls to the storage service:
-
-### Before (Direct localStorage)
-```typescript
-// Old way
-localStorage.setItem('hbs-parser-template', template)
-const saved = localStorage.getItem('hbs-parser-template')
-```
-
-### After (Storage Service)
-```typescript
-// New way
-await storageService.saveTemplate(template)
-const saved = await storageService.getTemplate()
-```
-
-### Benefits
-- ✅ **Flexible**: Easy to switch storage backends
-- ✅ **Testable**: Easy to mock for testing
-- ✅ **Maintainable**: Centralized storage logic
-- ✅ **Scalable**: Easy to add new features
-- ✅ **Type-safe**: Full TypeScript support
+The app now exclusively uses Supabase for all storage operations, providing a consistent and reliable cloud-based storage solution.

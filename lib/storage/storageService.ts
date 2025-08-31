@@ -1,6 +1,4 @@
 import { StorageService, StorageProvider, StorageConfig, Template } from './types'
-import { LocalStorageService } from './localStorageService'
-import { IndexedDBService } from './indexedDBService'
 import { SupabaseService } from './supabaseService'
 import { logger } from '../utils/logger'
 
@@ -10,9 +8,9 @@ export class StorageServiceManager {
   private config: StorageConfig
 
   private constructor() {
-    // Default to localStorage
-    this.config = { provider: 'localStorage' }
-    this.currentService = new LocalStorageService()
+    // Default to Supabase only
+    this.config = { provider: 'supabase' }
+    this.currentService = new SupabaseService()
   }
 
   static getInstance(): StorageServiceManager {
@@ -27,50 +25,7 @@ export class StorageServiceManager {
     return this.currentService
   }
 
-  // Switch storage provider
-  async switchProvider(provider: StorageProvider, options?: Record<string, any>): Promise<void> {
-    if (provider === this.config.provider) {
-      return // Already using this provider
-    }
-
-    try {
-      let newService: StorageService
-
-      switch (provider) {
-        case 'localStorage':
-          newService = new LocalStorageService()
-          break
-        case 'indexedDB':
-          newService = new IndexedDBService()
-          break
-        case 'mongodb':
-          // TODO: Implement MongoDB service
-          throw new Error('MongoDB storage not yet implemented')
-        case 'supabase':
-          newService = new SupabaseService()
-          break
-        case 'custom':
-          // TODO: Allow custom storage service injection
-          throw new Error('Custom storage not yet implemented')
-        default:
-          throw new Error(`Unknown storage provider: ${provider}`)
-      }
-
-      // Migrate data from old service to new service
-      await this.migrateData(this.currentService, newService)
-
-      // Update the current service
-      this.currentService = newService
-      this.config = { provider, options }
-
-      logger.log(`Switched to ${provider} storage provider`)
-    } catch (error) {
-      logger.error(`Failed to switch to ${provider} storage:`, error)
-      throw error
-    }
-  }
-
-  // Get current provider
+  // Get current provider (always Supabase)
   getCurrentProvider(): StorageProvider {
     return this.config.provider
   }
@@ -80,21 +35,35 @@ export class StorageServiceManager {
     return { ...this.config }
   }
 
-  // Migrate data between storage services
+  // Migrate data between storage services (simplified for Supabase only)
   private async migrateData(fromService: StorageService, toService: StorageService): Promise<void> {
     try {
-      const data = await fromService.loadAll()
-      if (Object.keys(data).length > 0) {
-        await toService.saveAll(data)
-        logger.log('Data migrated successfully')
+      // Load all data from the source service
+      const allData = await fromService.loadAll()
+      
+      if (allData) {
+        // Save all data to the destination service
+        await toService.saveAll(allData)
+        logger.log('Data migration completed successfully')
       }
     } catch (error) {
-      logger.warn('Failed to migrate data:', error)
-      // Don't throw here - we want to continue with the new service even if migration fails
+      logger.error('Data migration failed:', error)
+      throw new Error('Failed to migrate data between storage services')
     }
   }
 
-  // Convenience methods that delegate to the current service
+  // Clear all data
+  async clearAll(): Promise<void> {
+    try {
+      await this.currentService.clearAll()
+      logger.log('All data cleared successfully')
+    } catch (error) {
+      logger.error('Failed to clear data:', error)
+      throw error
+    }
+  }
+
+  // Convenience methods for direct access to current service
   async saveFile(key: string, value: string): Promise<void> {
     return this.currentService.saveFile(key, value)
   }
@@ -105,19 +74,6 @@ export class StorageServiceManager {
 
   async deleteFile(key: string): Promise<void> {
     return this.currentService.deleteFile(key)
-  }
-
-  async clearAll(): Promise<void> {
-    return this.currentService.clearAll()
-  }
-
-  // Template management methods
-  async saveTemplates(templates: Template[], currentTemplateId: string): Promise<void> {
-    return this.currentService.saveTemplates(templates, currentTemplateId)
-  }
-
-  async getTemplates(): Promise<{ templates: Template[], currentTemplateId: string } | null> {
-    return this.currentService.getTemplates()
   }
 
   async saveTemplate(template: string): Promise<void> {
@@ -168,14 +124,23 @@ export class StorageServiceManager {
     return this.currentService.getTheme()
   }
 
-  async saveAll(data: any): Promise<void> {
+  async saveTemplates(templates: Template[], currentTemplateId: string): Promise<void> {
+    return this.currentService.saveTemplates(templates, currentTemplateId)
+  }
+
+  async getTemplates(): Promise<{ templates: Template[], currentTemplateId: string } | null> {
+    return this.currentService.getTemplates()
+  }
+
+  async saveAll(data: Partial<any>): Promise<void> {
     return this.currentService.saveAll(data)
   }
 
-  async loadAll(): Promise<any> {
+  async loadAll(): Promise<Partial<any>> {
     return this.currentService.loadAll()
   }
 }
 
-// Export a singleton instance
+// Export singleton instance
 export const storageService = StorageServiceManager.getInstance()
+

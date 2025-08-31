@@ -8,43 +8,102 @@ export class SupabaseService implements StorageService {
   private readonly USE_LAYOUT_KEY = 'useLayout'
   private readonly THEME_KEY = 'theme'
   private readonly LAST_SAVED_KEY = 'lastSaved'
+  private readonly DATA_KEY = 'data'
+  private readonly LAYOUT_KEY = 'layout'
+  private readonly STYLES_KEY = 'styles'
 
-  // Core storage operations - using localStorage as fallback for non-template data
+  // Core storage operations - all data stored in Supabase
   async saveFile(key: string, value: string): Promise<void> {
-    if (key === this.TEMPLATES_KEY) {
-      // Templates are stored in Supabase, not in localStorage
-      return
+    try {
+      const { error } = await supabase
+        .from('app_data')
+        .upsert({
+          key,
+          value,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'key'
+        })
+
+      if (error) {
+        logger.error('Failed to save file to Supabase:', error)
+        throw error
+      }
+    } catch (error) {
+      logger.error('Failed to save file:', error)
+      throw error
     }
-    localStorage.setItem(key, value)
   }
 
   async getFile(key: string): Promise<string | null> {
-    if (key === this.TEMPLATES_KEY) {
-      // Templates are retrieved from Supabase
+    try {
+      const { data, error } = await supabase
+        .from('app_data')
+        .select('value')
+        .eq('key', key)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned - key doesn't exist
+          return null
+        }
+        logger.error('Failed to get file from Supabase:', error)
+        throw error
+      }
+
+      return data?.value || null
+    } catch (error) {
+      logger.error('Failed to get file:', error)
       return null
     }
-    return localStorage.getItem(key)
   }
 
   async deleteFile(key: string): Promise<void> {
-    if (key === this.TEMPLATES_KEY) {
-      // Clear all templates from Supabase
-      await this.clearAllTemplates()
-      return
+    try {
+      const { error } = await supabase
+        .from('app_data')
+        .delete()
+        .eq('key', key)
+
+      if (error) {
+        logger.error('Failed to delete file from Supabase:', error)
+        throw error
+      }
+    } catch (error) {
+      logger.error('Failed to delete file:', error)
+      throw error
     }
-    localStorage.removeItem(key)
   }
 
   async clearAll(): Promise<void> {
-    await this.clearAllTemplates()
-    localStorage.clear()
+    try {
+      // Clear all app data
+      const { error: appDataError } = await supabase
+        .from('app_data')
+        .delete()
+        .neq('key', '')
+
+      if (appDataError) {
+        logger.error('Failed to clear app data from Supabase:', appDataError)
+        throw appDataError
+      }
+
+      // Clear all templates
+      await this.clearAllTemplates()
+      
+      logger.log('All data cleared successfully from Supabase')
+    } catch (error) {
+      logger.error('Failed to clear all data:', error)
+      throw error
+    }
   }
 
   // Template management - Supabase operations
   async saveTemplates(templates: Template[], currentTemplateId: string): Promise<void> {
     try {
-      // Save current template ID to localStorage for quick access
-      localStorage.setItem(this.CURRENT_TEMPLATE_KEY, currentTemplateId)
+      // Save current template ID to Supabase
+      await this.saveFile(this.CURRENT_TEMPLATE_KEY, currentTemplateId)
       
       // Save each template to Supabase and get back the actual IDs
       const updatedTemplates: Template[] = []
@@ -58,7 +117,7 @@ export class SupabaseService implements StorageService {
       }
       
       // Update last saved timestamp
-      localStorage.setItem(this.LAST_SAVED_KEY, new Date().toISOString())
+      await this.saveFile(this.LAST_SAVED_KEY, new Date().toISOString())
     } catch (error) {
       logger.error('Failed to save templates to Supabase:', error)
       throw error
@@ -91,8 +150,8 @@ export class SupabaseService implements StorageService {
         updatedAt: new Date(row.updated_at)
       }))
 
-      // Get current template ID from localStorage
-      const currentTemplateId = localStorage.getItem(this.CURRENT_TEMPLATE_KEY) || ''
+      // Get current template ID from Supabase
+      const currentTemplateId = await this.getFile(this.CURRENT_TEMPLATE_KEY) || ''
 
       return { templates, currentTemplateId }
     } catch (error) {
@@ -101,7 +160,7 @@ export class SupabaseService implements StorageService {
     }
   }
 
-  // Legacy methods - redirect to Supabase where appropriate
+  // Legacy methods - now use Supabase
   async saveTemplate(template: string): Promise<void> {
     // This method is legacy - templates should be saved with full Template object
     console.warn('saveTemplate() is deprecated. Use saveTemplates() instead.')
@@ -114,44 +173,45 @@ export class SupabaseService implements StorageService {
   }
 
   async saveData(data: string): Promise<void> {
-    localStorage.setItem('data', data)
+    await this.saveFile(this.DATA_KEY, data)
   }
 
   async getData(): Promise<string | null> {
-    return localStorage.getItem('data')
+    return await this.getFile(this.DATA_KEY)
   }
 
   async saveLayout(layout: string): Promise<void> {
-    localStorage.setItem('layout', layout)
+    await this.saveFile(this.LAYOUT_KEY, layout)
   }
 
   async getLayout(): Promise<string | null> {
-    return localStorage.getItem('layout')
+    return await this.getFile(this.LAYOUT_KEY)
   }
 
   async saveStyles(styles: string): Promise<void> {
-    localStorage.setItem('styles', styles)
+    await this.saveFile(this.STYLES_KEY, styles)
   }
 
   async getStyles(): Promise<string | null> {
-    return localStorage.getItem('styles')
+    return await this.getFile(this.STYLES_KEY)
   }
 
   async savePreferences(useLayout: boolean): Promise<void> {
-    localStorage.setItem(this.USE_LAYOUT_KEY, JSON.stringify(useLayout))
+    await this.saveFile(this.USE_LAYOUT_KEY, JSON.stringify(useLayout))
   }
 
   async getPreferences(): Promise<{ useLayout: boolean } | null> {
-    const value = localStorage.getItem(this.USE_LAYOUT_KEY)
+    const value = await this.getFile(this.USE_LAYOUT_KEY)
     return value ? { useLayout: JSON.parse(value) } : null
   }
 
   async saveTheme(theme: 'dark' | 'light'): Promise<void> {
-    localStorage.setItem(this.THEME_KEY, theme)
+    await this.saveFile(this.THEME_KEY, theme)
   }
 
   async getTheme(): Promise<'dark' | 'light' | null> {
-    return localStorage.getItem(this.THEME_KEY) as 'dark' | 'light' | null
+    const value = await this.getFile(this.THEME_KEY)
+    return value as 'dark' | 'light' | null
   }
 
   // Bulk operations
@@ -169,7 +229,7 @@ export class SupabaseService implements StorageService {
     }
     
     if (data.lastSaved) {
-      localStorage.setItem(this.LAST_SAVED_KEY, data.lastSaved.toISOString())
+      await this.saveFile(this.LAST_SAVED_KEY, data.lastSaved.toISOString())
     }
   }
 
@@ -177,7 +237,7 @@ export class SupabaseService implements StorageService {
     const templatesData = await this.getTemplates()
     const preferences = await this.getPreferences()
     const theme = await this.getTheme()
-    const lastSavedStr = localStorage.getItem(this.LAST_SAVED_KEY)
+    const lastSavedStr = await this.getFile(this.LAST_SAVED_KEY)
     
     return {
       templates: templatesData?.templates || [],
@@ -226,7 +286,7 @@ export class SupabaseService implements StorageService {
       } else if (template.id.startsWith('temp-')) {
         // New template - let Supabase generate the ID
         templateId = undefined
-                  logger.log(`🆕 Creating new template: ${template.name}`)
+        logger.log(`🆕 Creating new template: ${template.name}`)
       }
 
       logger.log(`📝 Final upsert data:`, {
