@@ -3,7 +3,8 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Code2, Copy } from 'lucide-react'
 import { handleCopyHtml } from '@/lib/utils/fileUtils'
-import DOMPurify from 'dompurify'
+import { useHtmlSanitizer } from '@/lib/hooks'
+import { useEffect, useState } from 'react'
 
 interface PreviewPanelProps {
   compiledHtml: string
@@ -16,6 +17,15 @@ export const PreviewPanel = ({
   error,
   isDarkTheme
 }: PreviewPanelProps) => {
+  const [sanitizedHtml, setSanitizedHtml] = useState<string>('')
+  const { sanitizeHtml, isClient } = useHtmlSanitizer()
+
+  useEffect(() => {
+    if (compiledHtml) {
+      sanitizeHtml(compiledHtml).then(setSanitizedHtml)
+    }
+  }, [compiledHtml, sanitizeHtml])
+
   return (
     <div className="h-full flex flex-col">
       <div className="h-7 bg-[#0A0A0A] border-b border-[#333333] flex items-center px-3 justify-between">
@@ -71,7 +81,7 @@ export const PreviewPanel = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className={`prose max-w-none ${isDarkTheme ? 'prose-invert prose-pre:bg-[#161616] prose-pre:text-gray-300' : ''} p-4`}
-                             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(compiledHtml) }}
+              dangerouslySetInnerHTML={{ __html: isClient ? sanitizedHtml : compiledHtml }}
             />
           )}
         </AnimatePresence>

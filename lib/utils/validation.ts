@@ -3,6 +3,26 @@
  */
 
 /**
+ * Basic HTML sanitization function that can be used as a fallback
+ * when DOMPurify is not available (e.g., during build time)
+ */
+export function basicHtmlSanitize(html: string): string {
+  if (!html) return ''
+  
+  return html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove script tags
+    .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '') // Remove iframe tags
+    .replace(/<object[^>]*>[\s\S]*?<\/object>/gi, '') // Remove object tags
+    .replace(/<embed[^>]*>/gi, '') // Remove embed tags
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '') // Remove event handlers
+    .replace(/javascript:/gi, '') // Remove javascript: protocol
+    .replace(/data:/gi, '') // Remove data: protocol
+    .replace(/vbscript:/gi, '') // Remove vbscript: protocol
+    .replace(/<link[^>]*>/gi, '') // Remove link tags (potential external resources)
+    .replace(/<meta[^>]*>/gi, '') // Remove meta tags
+}
+
+/**
  * Sanitize template name - remove potentially dangerous characters
  */
 export function sanitizeTemplateName(name: string): string {

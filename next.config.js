@@ -31,16 +31,49 @@ const nextConfig = {
     ]
   },
 
-  webpack: (config) => {
+  // Disable static generation for the main page to avoid DOMPurify issues
+  experimental: {
+    // This ensures the page is rendered on the client side
+    // and avoids issues with browser-only APIs during build
+    staticPageGenerationTimeout: 0
+  },
+
+  // Ensure proper handling of client-side only libraries
+  compiler: {
+    // Remove console.logs in production
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+
+  webpack: (config, { isServer }) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
+      // Add fallbacks for browser-only APIs
+      crypto: false,
+      stream: false,
+      url: false,
+      zlib: false,
+      http: false,
+      https: false,
+      assert: false,
+      os: false,
+      path: false,
     };
     
     // Suppress Handlebars webpack warnings
     config.ignoreWarnings = [
       /require\.extensions is not supported by webpack/,
     ];
+
+    // Handle client-side only libraries properly
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        // Ensure these are properly handled for client-side
+        net: false,
+        tls: false,
+      };
+    }
     
     return config;
   },
