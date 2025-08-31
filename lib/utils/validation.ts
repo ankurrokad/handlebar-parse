@@ -49,7 +49,7 @@ export function validateTemplateName(name: string): { isValid: boolean; error?: 
 export function sanitizeTemplateContent(content: string): string {
   // Basic sanitization - remove script tags and dangerous attributes
   return content
-    .replace(/<script[^>]*>.*?<\/script>/gis, '') // Remove script tags
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove script tags
     .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '') // Remove event handlers
     .replace(/javascript:/gi, '') // Remove javascript: protocol
     .replace(/data:/gi, '') // Remove data: protocol
