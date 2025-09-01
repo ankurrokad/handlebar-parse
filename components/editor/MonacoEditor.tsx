@@ -34,9 +34,6 @@ const handleEditorDidMount = (editor: any, monaco: any) => {
   editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyA, () => {
     editor.trigger('keyboard', 'editor.action.selectAll', {})
   })
-  
-  // Mark as loaded
-  setIsLoading(false)
 }
 
 const commonEditorOptions = {
@@ -101,6 +98,11 @@ export const MonacoEditor = ({
   const handleMonacoError = () => {
     console.warn('Monaco Editor failed to load, falling back to textarea')
     setMonacoError(true)
+  }
+
+  const handleEditorMount = (editor: any, monaco: any) => {
+    handleEditorDidMount(editor, monaco)
+    setIsLoading(false)
   }
 
   // Show loading state
@@ -173,8 +175,7 @@ export const MonacoEditor = ({
         value={value}
         onChange={onChange}
         theme={theme}
-        onMount={handleEditorDidMount}
-        onError={handleMonacoError}
+        onMount={handleEditorMount}
         options={getLanguageSpecificOptions()}
       />
     </div>
