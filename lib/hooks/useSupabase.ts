@@ -17,6 +17,11 @@ export const useSupabase = () => {
       setIsLoading(true)
       setError(null)
       
+      // Check if supabase client is available
+      if (!supabase) {
+        throw new Error('Supabase client not available')
+      }
+      
       // Test connection by making a simple query
       const { data, error: connectionError } = await supabase
         .from('templates')
