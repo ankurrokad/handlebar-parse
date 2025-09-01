@@ -3,108 +3,15 @@ import { supabase } from '../supabase/client'
 import { logger } from '../utils/logger'
 
 export class SupabaseService implements StorageService {
-  private readonly TEMPLATES_KEY = 'templates'
-  private readonly CURRENT_TEMPLATE_KEY = 'currentTemplateId'
-  private readonly USE_LAYOUT_KEY = 'useLayout'
-  private readonly THEME_KEY = 'theme'
-  private readonly LAST_SAVED_KEY = 'lastSaved'
-  private readonly DATA_KEY = 'data'
-  private readonly LAYOUT_KEY = 'layout'
-  private readonly STYLES_KEY = 'styles'
-
-  // Core storage operations - all data stored in Supabase
-  async saveFile(key: string, value: string): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('app_data')
-        .upsert({
-          key,
-          value,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'key'
-        })
-
-      if (error) {
-        logger.error('Failed to save file to Supabase:', error)
-        throw error
-      }
-    } catch (error) {
-      logger.error('Failed to save file:', error)
-      throw error
-    }
-  }
-
-  async getFile(key: string): Promise<string | null> {
-    try {
-      const { data, error } = await supabase
-        .from('app_data')
-        .select('value')
-        .eq('key', key)
-        .single()
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No rows returned - key doesn't exist
-          return null
-        }
-        logger.error('Failed to get file from Supabase:', error)
-        throw error
-      }
-
-      return data?.value || null
-    } catch (error) {
-      logger.error('Failed to get file:', error)
-      return null
-    }
-  }
-
-  async deleteFile(key: string): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('app_data')
-        .delete()
-        .eq('key', key)
-
-      if (error) {
-        logger.error('Failed to delete file from Supabase:', error)
-        throw error
-      }
-    } catch (error) {
-      logger.error('Failed to delete file:', error)
-      throw error
-    }
-  }
-
-  async clearAll(): Promise<void> {
-    try {
-      // Clear all app data
-      const { error: appDataError } = await supabase
-        .from('app_data')
-        .delete()
-        .neq('key', '')
-
-      if (appDataError) {
-        logger.error('Failed to clear app data from Supabase:', appDataError)
-        throw appDataError
-      }
-
-      // Clear all templates
-      await this.clearAllTemplates()
-      
-      logger.log('All data cleared successfully from Supabase')
-    } catch (error) {
-      logger.error('Failed to clear all data:', error)
-      throw error
-    }
-  }
-
-  // Template management - Supabase operations
+  // Template management - Supabase operations only
   async saveTemplates(templates: Template[], currentTemplateId: string): Promise<void> {
     try {
-      // Save current template ID to Supabase
-      await this.saveFile(this.CURRENT_TEMPLATE_KEY, currentTemplateId)
-      
+      // Check if Supabase client is available
+      if (!supabase) {
+        logger.warn('Supabase client not available, skipping save')
+        return
+      }
+
       // Save each template to Supabase and get back the actual IDs
       const updatedTemplates: Template[] = []
       for (const template of templates) {
@@ -116,8 +23,7 @@ export class SupabaseService implements StorageService {
         }
       }
       
-      // Update last saved timestamp
-      await this.saveFile(this.LAST_SAVED_KEY, new Date().toISOString())
+      logger.log('Templates saved successfully to Supabase')
     } catch (error) {
       logger.error('Failed to save templates to Supabase:', error)
       throw error
@@ -126,19 +32,33 @@ export class SupabaseService implements StorageService {
 
   async getTemplates(): Promise<{ templates: Template[], currentTemplateId: string } | null> {
     try {
-      // Get templates from Supabase
-      const { data, error } = await supabase
+      // Check if Supabase client is available
+      if (!supabase) {
+        logger.warn('Supabase client not available, returning null to indicate no storage')
+        return null
+      }
+
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), 5000) // 5 second timeout
+      })
+
+      // Get templates from Supabase with timeout
+      const templatesPromise = supabase
         .from('templates')
         .select('*')
         .order('updated_at', { ascending: false })
 
+      const { data, error } = await Promise.race([templatesPromise, timeoutPromise])
+
       if (error) {
         logger.error('Error fetching templates:', error)
+        // Return null on error to indicate storage failure
         return null
       }
 
       // Convert Supabase data to Template format
-      const templates: Template[] = data.map(row => ({
+      const templates: Template[] = (data || []).map(row => ({
         id: row.id,
         name: row.name,
         slug: row.name.toLowerCase().replace(/\s+/g, '-'), // Generate slug from name
@@ -150,68 +70,33 @@ export class SupabaseService implements StorageService {
         updatedAt: new Date(row.updated_at)
       }))
 
-      // Get current template ID from Supabase
-      const currentTemplateId = await this.getFile(this.CURRENT_TEMPLATE_KEY) || ''
+      // For now, return the first template as current, or empty string if no templates
+      const currentTemplateId = templates.length > 0 ? templates[0].id : ''
 
       return { templates, currentTemplateId }
     } catch (error) {
       logger.error('Failed to get templates from Supabase:', error)
+      // Return null on error to indicate storage failure
       return null
     }
   }
 
-  // Legacy methods - now use Supabase
-  async saveTemplate(template: string): Promise<void> {
-    // This method is legacy - templates should be saved with full Template object
-    console.warn('saveTemplate() is deprecated. Use saveTemplates() instead.')
-  }
+  async clearAll(): Promise<void> {
+    try {
+      // Check if Supabase client is available
+      if (!supabase) {
+        logger.warn('Supabase client not available, skipping clear')
+        return
+      }
 
-  async getTemplate(): Promise<string | null> {
-    // This method is legacy - templates should be retrieved with getTemplates()
-    console.warn('getTemplate() is deprecated. Use getTemplates() instead.')
-    return null
-  }
-
-  async saveData(data: string): Promise<void> {
-    await this.saveFile(this.DATA_KEY, data)
-  }
-
-  async getData(): Promise<string | null> {
-    return await this.getFile(this.DATA_KEY)
-  }
-
-  async saveLayout(layout: string): Promise<void> {
-    await this.saveFile(this.LAYOUT_KEY, layout)
-  }
-
-  async getLayout(): Promise<string | null> {
-    return await this.getFile(this.LAYOUT_KEY)
-  }
-
-  async saveStyles(styles: string): Promise<void> {
-    await this.saveFile(this.STYLES_KEY, styles)
-  }
-
-  async getStyles(): Promise<string | null> {
-    return await this.getFile(this.STYLES_KEY)
-  }
-
-  async savePreferences(useLayout: boolean): Promise<void> {
-    await this.saveFile(this.USE_LAYOUT_KEY, JSON.stringify(useLayout))
-  }
-
-  async getPreferences(): Promise<{ useLayout: boolean } | null> {
-    const value = await this.getFile(this.USE_LAYOUT_KEY)
-    return value ? { useLayout: JSON.parse(value) } : null
-  }
-
-  async saveTheme(theme: 'dark' | 'light'): Promise<void> {
-    await this.saveFile(this.THEME_KEY, theme)
-  }
-
-  async getTheme(): Promise<'dark' | 'light' | null> {
-    const value = await this.getFile(this.THEME_KEY)
-    return value as 'dark' | 'light' | null
+      // Clear all templates
+      await this.clearAllTemplates()
+      
+      logger.log('All templates cleared successfully from Supabase')
+    } catch (error) {
+      logger.error('Failed to clear all data:', error)
+      throw error
+    }
   }
 
   // Bulk operations
@@ -219,38 +104,32 @@ export class SupabaseService implements StorageService {
     if (data.templates && data.currentTemplateId !== undefined) {
       await this.saveTemplates(data.templates, data.currentTemplateId)
     }
-    
-    if (data.useLayout !== undefined) {
-      await this.savePreferences(data.useLayout)
-    }
-    
-    if (data.theme) {
-      await this.saveTheme(data.theme)
-    }
-    
-    if (data.lastSaved) {
-      await this.saveFile(this.LAST_SAVED_KEY, data.lastSaved.toISOString())
-    }
   }
 
-  async loadAll(): Promise<Partial<StorageData>> {
+  async loadAll(): Promise<Partial<StorageData> | null> {
     const templatesData = await this.getTemplates()
-    const preferences = await this.getPreferences()
-    const theme = await this.getTheme()
-    const lastSavedStr = await this.getFile(this.LAST_SAVED_KEY)
+    
+    // If getTemplates returns null, it means there was an error or no data
+    // Return null to indicate this to the caller
+    if (!templatesData) {
+      return null
+    }
     
     return {
-      templates: templatesData?.templates || [],
-      currentTemplateId: templatesData?.currentTemplateId || '',
-      useLayout: preferences?.useLayout || false,
-      theme: theme || 'dark',
-      lastSaved: lastSavedStr ? new Date(lastSavedStr) : null
+      templates: templatesData.templates,
+      currentTemplateId: templatesData.currentTemplateId
     }
   }
 
   // Private helper methods
   private async saveTemplateToSupabase(template: Template): Promise<Template | null> {
     try {
+      // Check if Supabase client is available
+      if (!supabase) {
+        logger.warn('Supabase client not available, skipping template save')
+        return null
+      }
+
       logger.log('Attempting to save template:', {
         name: template.name,
         hasId: !template.id.startsWith('temp-'),
@@ -343,6 +222,11 @@ export class SupabaseService implements StorageService {
   }
 
   private async clearAllTemplates(): Promise<void> {
+    if (!supabase) {
+      logger.warn('Supabase client not available, skipping template clear')
+      return
+    }
+
     const { error } = await supabase
       .from('templates')
       .delete()

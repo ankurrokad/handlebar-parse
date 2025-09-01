@@ -24,7 +24,7 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';"
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none'; worker-src 'self' blob:; child-src 'self' blob:;"
           }
         ]
       }
@@ -73,6 +73,15 @@ const nextConfig = {
         net: false,
         tls: false,
       };
+      
+      // Monaco Editor webpack configuration
+      config.module.rules.push({
+        test: /\.ttf$/,
+        type: 'asset/resource'
+      });
+      
+      // Ensure Monaco Editor web workers are handled properly
+      config.output.globalObject = 'self';
     }
     
     return config;

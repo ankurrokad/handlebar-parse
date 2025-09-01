@@ -22,6 +22,7 @@ export interface EditorState {
   isPlaying: boolean
   useLayout: boolean
   lastSaved: Date | null
+  isLoading: boolean
 }
 
 export const useEditor = () => {
@@ -472,12 +473,30 @@ export const useEditor = () => {
     error: '',
     isPlaying: true,
     useLayout: true,
-    lastSaved: null
+    lastSaved: null,
+    isLoading: true
   })
 
   // Get current template
   const getCurrentTemplate = () => {
-    return state.templates.find(t => t.id === state.currentTemplateId) || state.templates[0]
+    // During loading, return null to prevent compilation
+    if (state.isLoading) {
+      return null
+    }
+    
+    // If no templates exist, return null
+    if (state.templates.length === 0) {
+      return null
+    }
+    
+    // Find the current template by ID, fallback to first template
+    const currentTemplate = state.templates.find(t => t.id === state.currentTemplateId)
+    if (currentTemplate) {
+      return currentTemplate
+    }
+    
+    // If currentTemplateId doesn't exist, use the first template
+    return state.templates[0]
   }
 
   // Custom Handlebars helpers
@@ -501,10 +520,26 @@ export const useEditor = () => {
 
   // Compile template when template, data, layout, or styles changes
   useEffect(() => {
-    if (!state.isPlaying) return
+    console.log('🔄 Compilation effect triggered:', {
+      isLoading: state.isLoading,
+      isPlaying: state.isPlaying,
+      templatesCount: state.templates.length,
+      currentTemplateId: state.currentTemplateId
+    })
+    
+    // Don't compile if still loading or not playing
+    if (state.isLoading || !state.isPlaying) {
+      console.log('⏸️ Skipping compilation - loading or not playing')
+      return
+    }
     
     const currentTemplate = getCurrentTemplate()
-    if (!currentTemplate) return
+    if (!currentTemplate) {
+      console.log('❌ No current template found')
+      return
+    }
+    
+    console.log('🔄 Compiling template:', currentTemplate.name)
     
     try {
       const parsedData = JSON.parse(currentTemplate.data)
@@ -534,19 +569,21 @@ export const useEditor = () => {
         }
       }
       
+      console.log('✅ Template compiled successfully')
       setState(prev => ({
         ...prev,
         compiledHtml: result,
         error: ''
       }))
     } catch (err) {
+      console.error('❌ Template compilation failed:', err)
       setState(prev => ({
         ...prev,
         error: err instanceof Error ? err.message : 'Unknown error',
         compiledHtml: ''
       }))
     }
-  }, [state.templates, state.currentTemplateId, state.useLayout, state.isPlaying])
+  }, [state.templates, state.currentTemplateId, state.useLayout, state.isPlaying, state.isLoading])
 
   const updateField = (field: keyof Pick<Template, 'template' | 'data' | 'layout' | 'styles'>, value: string) => {
     setState(prev => ({
@@ -562,7 +599,6 @@ export const useEditor = () => {
 
   const switchTemplate = (templateId: string) => {
     setState(prev => ({ ...prev, currentTemplateId: templateId }))
-    savePreferences()
   }
 
   const createTemplate = (name: string, slug: string) => {
@@ -708,32 +744,33 @@ p {
 
   const toggleLayout = () => {
     setState(prev => ({ ...prev, useLayout: !prev.useLayout }))
-    savePreferences()
   }
 
-  // Load saved data from storage on mount
+  // SIMPLE LOADING LOGIC - Just stop loading after 2 seconds
   useEffect(() => {
-    const loadSavedData = async () => {
-      try {
-        const savedData = await storageService.loadAll()
-        
-        if (savedData.templates) {
-          setState(prev => ({ ...prev, templates: savedData.templates }))
-        }
-        if (savedData.currentTemplateId) {
-          setState(prev => ({ ...prev, currentTemplateId: savedData.currentTemplateId }))
-        }
-        if (savedData.useLayout !== undefined) {
-          setState(prev => ({ ...prev, useLayout: savedData.useLayout }))
-        }
-        
-        setState(prev => ({ ...prev, lastSaved: new Date() }))
-      } catch (err) {
-        console.warn('Failed to load from storage:', err)
-      }
-    }
+    console.log('🚀 useEditor mounted - starting simple loading process')
     
-    loadSavedData()
+    const timer = setTimeout(() => {
+      console.log('⏰ 2 second timeout reached, setting isLoading to false')
+      setState(prev => {
+        const newState = { 
+          ...prev, 
+          isLoading: false,
+          // Ensure we have a valid currentTemplateId
+          currentTemplateId: 'default',
+          // Trigger compilation by updating lastSaved
+          lastSaved: new Date()
+        }
+        console.log('🔄 New state after loading:', {
+          isLoading: newState.isLoading,
+          currentTemplateId: newState.currentTemplateId,
+          templatesCount: newState.templates.length
+        })
+        return newState
+      })
+    }, 2000)
+    
+    return () => clearTimeout(timer)
   }, [])
 
   const resetToDefaults = async () => {
@@ -869,16 +906,16 @@ p {
     }
   }
 
-  // Save theme and layout preference
-  const savePreferences = async () => {
-    try {
-      await storageService.savePreferences(state.useLayout)
-    } catch (err) {
-      console.warn('Failed to save preferences:', err)
-    }
-  }
-
   const currentTemplate = getCurrentTemplate()
+  
+  // Debug logging
+  console.log('🔍 Editor state:', {
+    isLoading: state.isLoading,
+    templatesCount: state.templates.length,
+    currentTemplateId: state.currentTemplateId,
+    currentTemplate: currentTemplate?.name || 'null',
+    isPlaying: state.isPlaying
+  })
 
   return {
     ...state,

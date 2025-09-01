@@ -63,67 +63,7 @@ export class StorageServiceManager {
     }
   }
 
-  // Convenience methods for direct access to current service
-  async saveFile(key: string, value: string): Promise<void> {
-    return this.currentService.saveFile(key, value)
-  }
-
-  async getFile(key: string): Promise<string | null> {
-    return this.currentService.getFile(key)
-  }
-
-  async deleteFile(key: string): Promise<void> {
-    return this.currentService.deleteFile(key)
-  }
-
-  async saveTemplate(template: string): Promise<void> {
-    return this.currentService.saveTemplate(template)
-  }
-
-  async getTemplate(): Promise<string | null> {
-    return this.currentService.getTemplate()
-  }
-
-  async saveData(data: string): Promise<void> {
-    return this.currentService.saveData(data)
-  }
-
-  async getData(): Promise<string | null> {
-    return this.currentService.getData()
-  }
-
-  async saveLayout(layout: string): Promise<void> {
-    return this.currentService.saveLayout(layout)
-  }
-
-  async getLayout(): Promise<string | null> {
-    return this.currentService.getLayout()
-  }
-
-  async saveStyles(styles: string): Promise<void> {
-    return this.currentService.saveStyles(styles)
-  }
-
-  async getStyles(): Promise<string | null> {
-    return this.currentService.getStyles()
-  }
-
-  async savePreferences(useLayout: boolean): Promise<void> {
-    return this.currentService.savePreferences(useLayout)
-  }
-
-  async getPreferences(): Promise<{ useLayout: boolean } | null> {
-    return this.currentService.getPreferences()
-  }
-
-  async saveTheme(theme: 'dark' | 'light'): Promise<void> {
-    return this.currentService.saveTheme(theme)
-  }
-
-  async getTheme(): Promise<'dark' | 'light' | null> {
-    return this.currentService.getTheme()
-  }
-
+  // Template management methods
   async saveTemplates(templates: Template[], currentTemplateId: string): Promise<void> {
     return this.currentService.saveTemplates(templates, currentTemplateId)
   }
@@ -136,7 +76,7 @@ export class StorageServiceManager {
     return this.currentService.saveAll(data)
   }
 
-  async loadAll(): Promise<Partial<any>> {
+  async loadAll(): Promise<Partial<any> | null> {
     return this.currentService.loadAll()
   }
 }

@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Suspense } from 'react'
-import { Loading } from '@/components/loading'
 import { Header, Background, MainContent } from '@/components'
 import { useEditor, useTheme } from '@/lib/hooks'
 import { handleCopyContent } from '@/lib/utils/fileUtils'
@@ -39,6 +37,8 @@ export default function Home() {
   }
 
   const handleCopyCurrentTab = () => {
+    if (!editor.currentTemplate) return
+    
     let contentToCopy = ''
     if (activeTab === 'template') contentToCopy = editor.currentTemplate.template
     else if (activeTab === 'data') contentToCopy = editor.currentTemplate.data
@@ -50,57 +50,67 @@ export default function Home() {
     }
   }
 
+  // Show loading state while editor is initializing
+  if (editor.isLoading || !editor.currentTemplate) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading HBS Parser...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <Suspense fallback={<Loading />}>
-      <motion.div 
-        className={`min-h-screen ${isDarkTheme ? 'bg-[#000000]' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Background />
+    <motion.div 
+      className={`min-h-screen ${isDarkTheme ? 'bg-[#000000]' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Background />
 
-        <Header
-          isPlaying={editor.isPlaying}
-          useLayout={editor.useLayout}
-          isDarkTheme={isDarkTheme}
-          templates={editor.templates}
-          currentTemplateId={editor.currentTemplateId}
-          onToggleAutoPlay={editor.toggleAutoPlay}
-          onToggleLayout={editor.toggleLayout}
-          onToggleTheme={toggleTheme}
-          onResetToDefaults={editor.resetToDefaults}
-          onSwitchTemplate={editor.switchTemplate}
-          onCreateTemplate={editor.createTemplate}
-          onDeleteTemplate={editor.deleteTemplate}
-          onRenameTemplate={editor.renameTemplate}
-          onCopyTemplate={(template) => {
-            const newName = `${template.name} (Copy)`
-            const newSlug = `${template.slug}-copy`
-            editor.createTemplate(newName, newSlug)
-          }}
-          onExportTemplate={editor.exportTemplate}
-          onImportTemplate={editor.importTemplate}
-        />
+      <Header
+        isPlaying={editor.isPlaying}
+        useLayout={editor.useLayout}
+        isDarkTheme={isDarkTheme}
+        templates={editor.templates}
+        currentTemplateId={editor.currentTemplateId}
+        onToggleAutoPlay={editor.toggleAutoPlay}
+        onToggleLayout={editor.toggleLayout}
+        onToggleTheme={toggleTheme}
+        onResetToDefaults={editor.resetToDefaults}
+        onSwitchTemplate={editor.switchTemplate}
+        onCreateTemplate={editor.createTemplate}
+        onDeleteTemplate={editor.deleteTemplate}
+        onRenameTemplate={editor.renameTemplate}
+        onCopyTemplate={(template) => {
+          const newName = `${template.name} (Copy)`
+          const newSlug = `${template.slug}-copy`
+          editor.createTemplate(newName, newSlug)
+        }}
+        onExportTemplate={editor.exportTemplate}
+        onImportTemplate={editor.importTemplate}
+      />
 
-        <MainContent
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          template={editor.currentTemplate.template}
-          data={editor.currentTemplate.data}
-          layout={editor.currentTemplate.layout}
-          styles={editor.currentTemplate.styles}
-          onTemplateChange={handleTemplateChange}
-          onDataChange={handleDataChange}
-          onLayoutChange={handleLayoutChange}
-          onStylesChange={handleStylesChange}
-          isDarkTheme={isDarkTheme}
-          lastSaved={editor.lastSaved}
-          onCopyCurrentTab={handleCopyCurrentTab}
-          compiledHtml={editor.compiledHtml}
-          error={editor.error}
-        />
-      </motion.div>
-    </Suspense>
+      <MainContent
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        template={editor.currentTemplate?.template || ''}
+        data={editor.currentTemplate?.data || ''}
+        layout={editor.currentTemplate?.layout || ''}
+        styles={editor.currentTemplate?.styles || ''}
+        onTemplateChange={handleTemplateChange}
+        onDataChange={handleDataChange}
+        onLayoutChange={handleLayoutChange}
+        onStylesChange={handleStylesChange}
+        isDarkTheme={isDarkTheme}
+        lastSaved={editor.lastSaved}
+        onCopyCurrentTab={handleCopyCurrentTab}
+        compiledHtml={editor.compiledHtml}
+        error={editor.error}
+      />
+    </motion.div>
   )
 }

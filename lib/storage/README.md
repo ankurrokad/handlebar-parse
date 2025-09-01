@@ -1,141 +1,132 @@
-# Storage Service Architecture
+# Storage Service
 
-This directory contains the storage architecture for the HBS Parser app, which exclusively uses Supabase as the storage backend.
+The storage service provides a unified interface for managing data persistence across different storage providers. Currently, it supports **Supabase** as the primary storage backend.
 
-## 🏗️ Architecture Overview
+## Architecture
 
-The storage system is built around a single, focused concept:
-
-1. **Storage Interface** - Abstract contract for all storage operations
-2. **Supabase Implementation** - Concrete implementation for Supabase backend
-3. **Storage Service Manager** - Central service that manages Supabase storage
-
-## 📁 File Structure
+The storage system is designed with a service-based architecture:
 
 ```
-lib/storage/
-├── types.ts              # Storage interfaces and types
-├── supabaseService.ts    # Supabase implementation
-├── storageService.ts     # Main service manager
-├── index.ts             # Public exports
-└── README.md            # This documentation
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Application   │───▶│ Storage Manager │───▶│ Storage Service │
+│                 │    │                 │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-## 🔌 Storage Interface
+## Current Implementation
 
-All storage implementations must implement the `StorageService` interface:
+### **Supabase Storage** (Exclusive)
+- **Provider**: `supabase`
+- **Tables**: `templates` only
+- **Features**: Template CRUD operations, automatic ID management
+- **No app_data**: Settings and preferences are no longer stored in Supabase
 
-```typescript
-interface StorageService {
-  // Core operations
-  saveFile(key: string, value: string): Promise<void>
-  getFile(key: string): Promise<string | null>
-  deleteFile(key: string): Promise<void>
-  clearAll(): Promise<void>
-  
-  // Convenience methods
-  saveTemplate(template: string): Promise<void>
-  getTemplate(): Promise<string | null>
-  saveData(data: string): Promise<void>
-  getData(): Promise<string | null>
-  saveLayout(layout: string): Promise<void>
-  getLayout(): Promise<string | null>
-  saveStyles(styles: string): Promise<void>
-  getStyles(): Promise<string | null>
-  savePreferences(useLayout: boolean): Promise<void>
-  getPreferences(): Promise<{ useLayout: boolean } | null>
-  saveTheme(theme: 'dark' | 'light'): Promise<void>
-  getTheme(): Promise<'dark' | 'light' | null>
-  
-  // Bulk operations
-  saveAll(data: Partial<StorageData>): Promise<void>
-  loadAll(): Promise<Partial<StorageData>>
-}
-```
+## Usage
 
-## 🚀 Usage Examples
-
-### Basic Usage
+### **Basic Template Operations**
 
 ```typescript
 import { storageService } from '@/lib/storage'
 
-// Save a file
-await storageService.saveFile('my-key', 'my-value')
+// Save templates
+await storageService.saveTemplates(templates, currentTemplateId)
 
-// Get a file
-const value = await storageService.getFile('my-key')
+// Get templates
+const data = await storageService.getTemplates()
 
-// Save template
-await storageService.saveTemplate('<h1>{{title}}</h1>')
+// Clear all data
+await storageService.clearAll()
 
-// Load all data
+// Bulk operations
+await storageService.saveAll({ templates, currentTemplateId })
 const allData = await storageService.loadAll()
 ```
 
-### Using the Storage Hook
+### **Template Management**
 
 ```typescript
-import { useStorage } from '@/lib/hooks'
-
-function MyComponent() {
-  const { 
-    isLoading, 
-    error, 
-    clearStorage 
-  } = useStorage()
-
-  const handleClear = async () => {
-    await clearStorage()
+// Save multiple templates
+const templates = [
+  {
+    id: 'template-1',
+    name: 'My Template',
+    slug: 'my-template',
+    template: '<h1>{{title}}</h1>',
+    data: '{"title": "Hello"}',
+    layout: '<div>{{{body}}}</div>',
+    styles: 'h1 { color: blue; }',
+    createdAt: new Date(),
+    updatedAt: new Date()
   }
+]
 
-  return (
-    <div>
-      <button onClick={handleClear} disabled={isLoading}>
-        Clear Storage
-      </button>
-      {error && <p>Error: {error}</p>}
-    </div>
-  )
+await storageService.saveTemplates(templates, 'template-1')
+```
+
+## Storage Structure
+
+### **Templates Table**
+```sql
+CREATE TABLE templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  content TEXT NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### **Data Flow**
+1. **Template Creation**: New templates get temporary IDs (`temp-*`)
+2. **Supabase Sync**: Templates are upserted to Supabase with proper UUIDs
+3. **ID Resolution**: Temporary IDs are replaced with actual Supabase UUIDs
+4. **Persistence**: All template data is automatically saved to Supabase
+
+## Key Features
+
+✅ **Template Persistence**: All templates automatically saved to Supabase  
+✅ **Automatic ID Management**: Handles temporary vs. permanent IDs seamlessly  
+✅ **Conflict Resolution**: Prevents duplicate template names  
+✅ **Bulk Operations**: Save/load multiple templates efficiently  
+✅ **Error Handling**: Comprehensive error logging and fallbacks  
+
+## Migration Notes
+
+### **Removed Functionality**
+- ❌ `saveFile()` / `getFile()` / `deleteFile()` - No more app_data storage
+- ❌ `saveTheme()` / `getTheme()` - Theme preferences not persisted
+- ❌ `savePreferences()` / `getPreferences()` - Layout preferences not persisted
+- ❌ `saveData()` / `getData()` - Template data not separately stored
+- ❌ `saveLayout()` / `getLayout()` - Layout not separately stored
+- ❌ `saveStyles()` / `getStyles()` - Styles not separately stored
+
+### **Current Functionality**
+- ✅ Template CRUD operations
+- ✅ Template metadata management
+- ✅ Automatic Supabase synchronization
+- ✅ Bulk template operations
+
+## Error Handling
+
+The storage service includes comprehensive error handling:
+
+```typescript
+try {
+  await storageService.saveTemplates(templates, currentTemplateId)
+} catch (error) {
+  console.error('Storage operation failed:', error)
+  // Handle error appropriately
 }
 ```
 
-## 🔄 Storage Provider
+## Future Considerations
 
-### Supabase (Exclusive)
-- **Implementation**: `SupabaseService`
-- **Pros**: Real-time sync, authentication, built-in backend, cloud storage, cross-device sync
-- **Cons**: Requires Supabase account, network dependency
-- **Use Case**: Production app with real-time collaboration, user accounts, cross-device sync
+- **Local Storage Fallback**: Could add localStorage for offline functionality
+- **Multiple Providers**: Architecture supports adding other storage backends
+- **Caching Layer**: Could add Redis or similar for performance
+- **Backup/Restore**: Could add export/import functionality
 
-## 🔧 Configuration
+---
 
-The app automatically configures Supabase storage:
-
-```typescript
-// The storage service automatically uses Supabase
-const storageManager = StorageServiceManager.getInstance()
-const currentProvider = storageManager.getCurrentProvider() // Always 'supabase'
-```
-
-## 📊 Data Migration
-
-The system automatically handles data persistence through Supabase:
-
-```typescript
-// All data is automatically saved to Supabase
-await storageService.saveTemplate('<h1>{{title}}</h1>')
-await storageService.saveData('{"title": "Hello World"}')
-```
-
-## 🚫 Removed Features
-
-The following storage options have been removed to simplify the app:
-
-- **LocalStorage**: No longer available
-- **IndexedDB**: No longer available  
-- **MongoDB**: No longer available
-- **Custom Storage**: No longer available
-- **Storage Provider Switching**: No longer available
-
-The app now exclusively uses Supabase for all storage operations, providing a consistent and reliable cloud-based storage solution.
+**Note**: This storage service is designed to be **template-focused only**. User preferences, themes, and other app settings are managed locally and not persisted to Supabase.
