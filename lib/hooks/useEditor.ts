@@ -573,24 +573,26 @@ export const useEditor = () => {
   }, [state.templates, state.currentTemplateId, state.useLayout, state.isPlaying, state.isLoading])
 
   const updateField = (field: keyof Pick<Template, 'template' | 'data' | 'layout' | 'styles'>, value: string) => {
+    const updatedTemplates = state.templates.map(t => 
+      t.id === state.currentTemplateId 
+        ? { ...t, [field]: value, updatedAt: new Date() }
+        : t
+    )
     setState(prev => ({
       ...prev,
-      templates: prev.templates.map(t => 
-        t.id === prev.currentTemplateId 
-          ? { ...t, [field]: value, updatedAt: new Date() }
-          : t
-      )
+      templates: updatedTemplates
     }))
-    saveToStorage()
+    saveToStorage(updatedTemplates, state.currentTemplateId)
   }
 
   const switchTemplate = (templateId: string) => {
     setState(prev => ({ ...prev, currentTemplateId: templateId }))
   }
 
-  const createTemplate = (name: string, slug: string) => {
+  const createTemplate = (name: string) => {
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
     const newTemplate: Template = {
-      id: `template-${Date.now()}`,
+      id: crypto.randomUUID(),
       name,
       slug,
       template: `<div class="container">
@@ -634,12 +636,13 @@ p {
       updatedAt: new Date()
     }
 
+    const newTemplates = [...state.templates, newTemplate]
     setState(prev => ({
       ...prev,
-      templates: [...prev.templates, newTemplate],
+      templates: newTemplates,
       currentTemplateId: newTemplate.id
     }))
-    saveToStorage()
+    saveToStorage(newTemplates, newTemplate.id)
   }
 
   const deleteTemplate = (templateId: string) => {
@@ -649,32 +652,32 @@ p {
     }
 
     if (confirm('Are you sure you want to delete this template? This action cannot be undone.')) {
-      setState(prev => {
-        const newTemplates = prev.templates.filter(t => t.id !== templateId)
-        const newCurrentId = prev.currentTemplateId === templateId 
-          ? newTemplates[0].id 
-          : prev.currentTemplateId
-        
-        return {
-          ...prev,
-          templates: newTemplates,
-          currentTemplateId: newCurrentId
-        }
-      })
-      saveToStorage()
+      const newTemplates = state.templates.filter(t => t.id !== templateId)
+      const newCurrentId = state.currentTemplateId === templateId 
+        ? newTemplates[0].id 
+        : state.currentTemplateId
+      
+      setState(prev => ({
+        ...prev,
+        templates: newTemplates,
+        currentTemplateId: newCurrentId
+      }))
+      saveToStorage(newTemplates, newCurrentId)
     }
   }
 
-  const renameTemplate = (templateId: string, newName: string, newSlug: string) => {
+  const renameTemplate = (templateId: string, newName: string) => {
+    const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    const updatedTemplates = state.templates.map(t => 
+      t.id === templateId 
+        ? { ...t, name: newName, slug: newSlug, updatedAt: new Date() }
+        : t
+    )
     setState(prev => ({
       ...prev,
-      templates: prev.templates.map(t => 
-        t.id === templateId 
-          ? { ...t, name: newName, slug: newSlug, updatedAt: new Date() }
-          : t
-      )
+      templates: updatedTemplates
     }))
-    saveToStorage()
+    saveToStorage(updatedTemplates, state.currentTemplateId)
   }
 
   const importTemplate = async (file: File) => {
@@ -899,12 +902,13 @@ p {
   }
 
   // Auto-save to storage
-  const saveToStorage = async () => {
+  const saveToStorage = async (templates = state.templates, currentId = state.currentTemplateId) => {
     try {
-      await storageService.saveTemplates(state.templates, state.currentTemplateId)
+      await storageService.saveTemplates(templates, currentId)
       setState(prev => ({ ...prev, lastSaved: new Date() }))
     } catch (err) {
       // Silently handle storage errors in production
+      console.error('Failed to save templates:', err)
     }
   }
 

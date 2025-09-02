@@ -17,12 +17,11 @@ interface HeaderProps {
   onToggleTheme: () => void
   onResetToDefaults: () => void
   onSwitchTemplate: (templateId: string) => void
-  onCreateTemplate: (name: string, slug: string) => void
+  onCreateTemplate: (name: string) => void
   onDeleteTemplate: (templateId: string) => void
-  onRenameTemplate: (templateId: string, newName: string, newSlug: string) => void
+  onRenameTemplate: (templateId: string, newName: string) => void
   onCopyTemplate: (template: Template) => void
   onExportTemplate: (template: Template) => void
-  onImportTemplate: (file: File) => Promise<boolean>
 }
 
 export const Header = ({
@@ -41,7 +40,6 @@ export const Header = ({
   onRenameTemplate,
   onCopyTemplate,
   onExportTemplate,
-  onImportTemplate
 }: HeaderProps) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
@@ -63,7 +61,6 @@ export const Header = ({
             onRenameTemplate={onRenameTemplate}
             onCopyTemplate={onCopyTemplate}
             onExportTemplate={onExportTemplate}
-            onImportTemplate={onImportTemplate}
           />
         </div>
       </div>

@@ -88,11 +88,9 @@ export default function Home() {
         onRenameTemplate={editor.renameTemplate}
         onCopyTemplate={(template) => {
           const newName = `${template.name} (Copy)`
-          const newSlug = `${template.slug}-copy`
-          editor.createTemplate(newName, newSlug)
+          editor.createTemplate(newName)
         }}
         onExportTemplate={editor.exportTemplate}
-        onImportTemplate={editor.importTemplate}
       />
 
       <MainContent
