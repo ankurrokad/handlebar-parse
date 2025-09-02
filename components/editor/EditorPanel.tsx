@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { useRef, useEffect, useMemo, useCallback } from 'react'
 import { MonacoEditor } from './MonacoEditor'
 
 interface EditorPanelProps {
@@ -28,7 +28,9 @@ export const EditorPanel = ({
   onStylesChange,
   isDarkTheme
 }: EditorPanelProps) => {
-  const getCurrentContent = () => {
+  const editorRef = useRef<any>(null)
+
+  const currentContent = useMemo(() => {
     switch (activeTab) {
       case 'template':
         return {
@@ -63,32 +65,41 @@ export const EditorPanel = ({
           title: 'layout'
         }
     }
-  }
+  }, [activeTab, template, data, layout, styles, onTemplateChange, onDataChange, onLayoutChange, onStylesChange])
 
-  const currentContent = getCurrentContent()
+  // Update editor language when tab changes
+  const updateEditorLanguage = useCallback(() => {
+    if (editorRef.current) {
+      const editor = editorRef.current
+      const monaco = (window as any).monaco
+      
+      if (monaco && editor) {
+        // Get the current model
+        const model = editor.getModel()
+        if (model) {
+          // Set the new language
+          monaco.editor.setModelLanguage(model, currentContent.language)
+        }
+      }
+    }
+  }, [currentContent.language])
+
+  useEffect(() => {
+    updateEditorLanguage()
+  }, [updateEditorLanguage])
 
   return (
     <div className="flex-1 relative">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          className="absolute inset-0"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.2 }}
-        >
-          <MonacoEditor
-            value={currentContent.value}
-            onChange={currentContent.onChange}
-            language={currentContent.language}
-            theme={isDarkTheme ? "vs-dark" : "light"}
-            importType={currentContent.importType}
-            onCopy={() => {}} // This will be handled by the parent
-            title={currentContent.title}
-          />
-        </motion.div>
-      </AnimatePresence>
+      <MonacoEditor
+        ref={editorRef}
+        value={currentContent.value}
+        onChange={currentContent.onChange}
+        language={currentContent.language}
+        theme={isDarkTheme ? "vs-dark" : "light"}
+        importType={currentContent.importType}
+        onCopy={() => {}} // This will be handled by the parent
+        title={currentContent.title}
+      />
     </div>
   )
 }

@@ -44,7 +44,6 @@ export const PreviewPanel = ({
         alert(`Print failed: ${result.error}`)
       }
     } catch (error) {
-      console.error('Print error:', error)
       alert('Failed to print. Please check your WeazyPrint configuration.')
     } finally {
       setIsPrinting(false)

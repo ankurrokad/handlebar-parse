@@ -35,7 +35,7 @@ export const useSettings = () => {
         setSettings({ ...DEFAULT_SETTINGS, ...parsed })
       }
     } catch (error) {
-      console.error('Failed to load settings from localStorage:', error)
+      // Silently handle localStorage errors
     } finally {
       setIsLoaded(true)
     }
@@ -49,7 +49,6 @@ export const useSettings = () => {
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updatedSettings))
       return true
     } catch (error) {
-      console.error('Failed to save settings to localStorage:', error)
       return false
     }
   }

@@ -25,7 +25,7 @@ export const useSupabase = () => {
       // Test connection by making a simple query
       const { data, error: connectionError } = await supabase
         .from('templates')
-        .select('count')
+        .select('id')
         .limit(1)
 
       if (connectionError) {

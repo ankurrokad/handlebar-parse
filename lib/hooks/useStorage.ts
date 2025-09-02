@@ -14,7 +14,6 @@ export const useStorage = () => {
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to initialize Supabase storage'
         setError(errorMessage)
-        console.error('Storage initialization failed:', err)
       }
     }
     
@@ -37,7 +36,6 @@ export const useStorage = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to clear storage'
       setError(errorMessage)
-      console.error('Storage clear failed:', err)
     } finally {
       setIsLoading(false)
     }

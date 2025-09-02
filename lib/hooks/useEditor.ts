@@ -520,26 +520,15 @@ export const useEditor = () => {
 
   // Compile template when template, data, layout, or styles changes
   useEffect(() => {
-    console.log('🔄 Compilation effect triggered:', {
-      isLoading: state.isLoading,
-      isPlaying: state.isPlaying,
-      templatesCount: state.templates.length,
-      currentTemplateId: state.currentTemplateId
-    })
-    
     // Don't compile if still loading or not playing
     if (state.isLoading || !state.isPlaying) {
-      console.log('⏸️ Skipping compilation - loading or not playing')
       return
     }
     
     const currentTemplate = getCurrentTemplate()
     if (!currentTemplate) {
-      console.log('❌ No current template found')
       return
     }
-    
-    console.log('🔄 Compiling template:', currentTemplate.name)
     
     try {
       const parsedData = JSON.parse(currentTemplate.data)
@@ -569,17 +558,15 @@ export const useEditor = () => {
         }
       }
       
-      console.log('✅ Template compiled successfully')
       setState(prev => ({
         ...prev,
         compiledHtml: result,
         error: ''
       }))
     } catch (err) {
-      console.error('❌ Template compilation failed:', err)
       setState(prev => ({
         ...prev,
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: err instanceof Error ? err.message : 'Template compilation failed',
         compiledHtml: ''
       }))
     }
@@ -746,31 +733,46 @@ p {
     setState(prev => ({ ...prev, useLayout: !prev.useLayout }))
   }
 
-  // SIMPLE LOADING LOGIC - Just stop loading after 2 seconds
+  // Load data from Supabase on mount
   useEffect(() => {
-    console.log('🚀 useEditor mounted - starting simple loading process')
-    
-    const timer = setTimeout(() => {
-      console.log('⏰ 2 second timeout reached, setting isLoading to false')
-      setState(prev => {
-        const newState = { 
-          ...prev, 
-          isLoading: false,
-          // Ensure we have a valid currentTemplateId
-          currentTemplateId: 'default',
-          // Trigger compilation by updating lastSaved
-          lastSaved: new Date()
+    const loadData = async () => {
+      try {
+        // Try to load data from Supabase with timeout
+        const loadPromise = storageService.loadAll()
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Loading timeout')), 10000) // 10 second timeout
+        )
+        
+        const data = await Promise.race([loadPromise, timeoutPromise]) as any
+        
+        if (data && data.templates && data.templates.length > 0) {
+          setState(prev => ({
+            ...prev,
+            templates: data.templates,
+            currentTemplateId: data.currentTemplateId || data.templates[0].id,
+            isLoading: false,
+            lastSaved: new Date()
+          }))
+        } else {
+          setState(prev => ({
+            ...prev,
+            isLoading: false,
+            currentTemplateId: 'default',
+            lastSaved: new Date()
+          }))
         }
-        console.log('🔄 New state after loading:', {
-          isLoading: newState.isLoading,
-          currentTemplateId: newState.currentTemplateId,
-          templatesCount: newState.templates.length
-        })
-        return newState
-      })
-    }, 2000)
+      } catch (error) {
+        // Fallback to default templates
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          currentTemplateId: 'default',
+          lastSaved: new Date()
+        }))
+      }
+    }
     
-    return () => clearTimeout(timer)
+    loadData()
   }, [])
 
   const resetToDefaults = async () => {
@@ -891,7 +893,7 @@ p {
       try {
         await storageService.clearAll()
       } catch (err) {
-        console.warn('Failed to clear storage:', err)
+        // Silently handle storage errors in production
       }
     }
   }
@@ -902,20 +904,11 @@ p {
       await storageService.saveTemplates(state.templates, state.currentTemplateId)
       setState(prev => ({ ...prev, lastSaved: new Date() }))
     } catch (err) {
-      console.warn('Failed to save to storage:', err)
+      // Silently handle storage errors in production
     }
   }
 
   const currentTemplate = getCurrentTemplate()
-  
-  // Debug logging
-  console.log('🔍 Editor state:', {
-    isLoading: state.isLoading,
-    templatesCount: state.templates.length,
-    currentTemplateId: state.currentTemplateId,
-    currentTemplate: currentTemplate?.name || 'null',
-    isPlaying: state.isPlaying
-  })
 
   return {
     ...state,

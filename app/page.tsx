@@ -57,6 +57,7 @@ export default function Home() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
           <p className="text-white text-lg">Loading HBS Parser...</p>
+          <p className="text-gray-400 text-sm mt-2">Initializing editor</p>
         </div>
       </div>
     )

@@ -23,9 +23,7 @@ export class SupabaseService implements StorageService {
         }
       }
       
-      logger.log('Templates saved successfully to Supabase')
     } catch (error) {
-      logger.error('Failed to save templates to Supabase:', error)
       throw error
     }
   }
@@ -52,30 +50,51 @@ export class SupabaseService implements StorageService {
       const { data, error } = await Promise.race([templatesPromise, timeoutPromise])
 
       if (error) {
-        logger.error('Error fetching templates:', error)
         // Return null on error to indicate storage failure
         return null
       }
 
       // Convert Supabase data to Template format
-      const templates: Template[] = (data || []).map(row => ({
-        id: row.id,
-        name: row.name,
-        slug: row.name.toLowerCase().replace(/\s+/g, '-'), // Generate slug from name
-        template: row.content, // Map content to template
-        data: '{}', // Default empty data
-        layout: '<div>{{{body}}}</div>', // Default layout
-        styles: '', // Default empty styles
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
-      }))
+      const templates: Template[] = (data || []).map(row => {
+        // Try to parse the content as JSON to get the full template structure
+        let templateData = {
+          template: row.content || '',
+          data: '{}',
+          layout: '<div>{{{body}}}</div>',
+          styles: ''
+        }
+        
+        try {
+          // If content is JSON, parse it to get the full template structure
+          const parsedContent = JSON.parse(row.content || '{}')
+          if (parsedContent.template || parsedContent.data || parsedContent.layout || parsedContent.styles) {
+            templateData = {
+              template: parsedContent.template || '',
+              data: parsedContent.data || '{}',
+              layout: parsedContent.layout || '<div>{{{body}}}</div>',
+              styles: parsedContent.styles || ''
+            }
+          }
+        } catch (e) {
+          // If parsing fails, treat content as template directly
+          templateData.template = row.content || ''
+        }
+        
+        return {
+          id: row.id,
+          name: row.name,
+          slug: row.name.toLowerCase().replace(/\s+/g, '-'),
+          ...templateData,
+          createdAt: new Date(row.created_at),
+          updatedAt: new Date(row.updated_at)
+        }
+      })
 
       // For now, return the first template as current, or empty string if no templates
       const currentTemplateId = templates.length > 0 ? templates[0].id : ''
 
       return { templates, currentTemplateId }
     } catch (error) {
-      logger.error('Failed to get templates from Supabase:', error)
       // Return null on error to indicate storage failure
       return null
     }
@@ -91,10 +110,7 @@ export class SupabaseService implements StorageService {
 
       // Clear all templates
       await this.clearAllTemplates()
-      
-      logger.log('All templates cleared successfully from Supabase')
     } catch (error) {
-      logger.error('Failed to clear all data:', error)
       throw error
     }
   }
@@ -130,11 +146,7 @@ export class SupabaseService implements StorageService {
         return null
       }
 
-      logger.log('Attempting to save template:', {
-        name: template.name,
-        hasId: !template.id.startsWith('temp-'),
-        contentLength: template.template.length
-      })
+
 
       // First, check if a template with this name already exists
       const { data: existingTemplates, error: searchError } = await supabase
@@ -144,7 +156,6 @@ export class SupabaseService implements StorageService {
         .limit(1)
 
       if (searchError) {
-        logger.error('Error searching for existing template:', searchError)
         throw searchError
       }
 
@@ -157,22 +168,18 @@ export class SupabaseService implements StorageService {
         if (template.id.startsWith('temp-')) {
           templateId = existing.id
           isUpdate = true
-          logger.log(`🔄 Updating existing template: ${template.name} (ID: ${templateId})`)
-        } else if (template.id !== existing.id) {
-          // Different ID but same name - this shouldn't happen, but let's handle it
-          logger.warn(`⚠️ Template name conflict: ${template.name}`)
         }
       } else if (template.id.startsWith('temp-')) {
         // New template - let Supabase generate the ID
         templateId = undefined
-        logger.log(`🆕 Creating new template: ${template.name}`)
       }
 
-      logger.log(`📝 Final upsert data:`, {
-        id: templateId,
-        name: template.name,
-        isUpdate,
-        operation: isUpdate ? 'UPDATE' : 'INSERT'
+      // Store the full template structure as JSON
+      const templateContent = JSON.stringify({
+        template: template.template,
+        data: template.data,
+        layout: template.layout,
+        styles: template.styles
       })
 
       const { data, error } = await supabase
@@ -180,8 +187,8 @@ export class SupabaseService implements StorageService {
         .upsert({
           ...(templateId && !templateId.startsWith('temp-') ? { id: templateId } : {}),
           name: template.name,
-          content: template.template, // Map template to content
-          description: template.description || `Template: ${template.name}`, // Use description or generate one
+          content: templateContent, // Store full template structure as JSON
+          description: template.description || `Template: ${template.name}`,
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'id'
@@ -189,25 +196,40 @@ export class SupabaseService implements StorageService {
         .select()
 
       if (error) {
-        logger.error('Supabase error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        })
         throw error
       }
 
       if (data && data.length > 0) {
         const savedRow = data[0]
+        
+        // Parse the stored content to get the full template structure
+        let templateData = {
+          template: savedRow.content || '',
+          data: '{}',
+          layout: '<div>{{{body}}}</div>',
+          styles: ''
+        }
+        
+        try {
+          const parsedContent = JSON.parse(savedRow.content || '{}')
+          if (parsedContent.template || parsedContent.data || parsedContent.layout || parsedContent.styles) {
+            templateData = {
+              template: parsedContent.template || '',
+              data: parsedContent.data || '{}',
+              layout: parsedContent.layout || '<div>{{{body}}}</div>',
+              styles: parsedContent.styles || ''
+            }
+          }
+        } catch (e) {
+          // If parsing fails, treat content as template directly
+          templateData.template = savedRow.content || ''
+        }
+        
         return {
           id: savedRow.id,
           name: savedRow.name,
           slug: savedRow.name.toLowerCase().replace(/\s+/g, '-'),
-          template: savedRow.content,
-          data: '{}',
-          layout: '<div>{{{body}}}</div>',
-          styles: '',
+          ...templateData,
           description: savedRow.description,
           createdAt: new Date(savedRow.created_at),
           updatedAt: new Date(savedRow.updated_at)
@@ -216,14 +238,12 @@ export class SupabaseService implements StorageService {
 
       return null
     } catch (error) {
-      logger.error('Unexpected error in saveTemplateToSupabase:', error)
       throw error
     }
   }
 
   private async clearAllTemplates(): Promise<void> {
     if (!supabase) {
-      logger.warn('Supabase client not available, skipping template clear')
       return
     }
 
@@ -233,7 +253,6 @@ export class SupabaseService implements StorageService {
       .neq('id', '') // Delete all records
 
     if (error) {
-      logger.error('Error clearing templates from Supabase:', error)
       throw error
     }
   }

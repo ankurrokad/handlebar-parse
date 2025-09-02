@@ -4,8 +4,10 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Missing Supabase environment variables. App will run in offline mode.')
-  // Don't throw error, just log warning
+  // App will run in offline mode without Supabase
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('Missing Supabase environment variables. App will run in offline mode.')
+  }
 }
 
 export const supabase = supabaseUrl && supabaseAnonKey 

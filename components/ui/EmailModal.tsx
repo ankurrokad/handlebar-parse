@@ -53,7 +53,6 @@ export const EmailModal = ({ isOpen, onClose, htmlContent }: EmailModalProps) =>
         alert(`Failed to send email: ${result.error}`)
       }
     } catch (error) {
-      console.error('Email error:', error)
       alert('Failed to send email. Please check your SMTP configuration.')
     } finally {
       setIsSubmitting(false)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { motion } from 'framer-motion'
 import { Upload, Copy } from 'lucide-react'
 import Editor from '@monaco-editor/react'
@@ -57,9 +57,21 @@ const commonEditorOptions = {
   accessibilitySupport: 'on' as const,
   quickSuggestions: true,
   selectOnLineNumbers: true,
+  // Production optimizations
+  renderWhitespace: 'none' as const,
+  renderControlCharacters: false,
+  renderIndentGuides: false,
+  hideCursorInOverviewRuler: true,
+  overviewRulerBorder: false,
+  scrollbar: {
+    vertical: 'auto' as const,
+    horizontal: 'auto' as const,
+    verticalScrollbarSize: 8,
+    horizontalScrollbarSize: 8,
+  },
 }
 
-export const MonacoEditor = ({
+export const MonacoEditor = forwardRef<any, MonacoEditorProps>(({
   value,
   onChange,
   language,
@@ -67,22 +79,25 @@ export const MonacoEditor = ({
   importType,
   onCopy,
   title
-}: MonacoEditorProps) => {
+}, ref) => {
   const [monacoError, setMonacoError] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [editorInstance, setEditorInstance] = useState<any>(null)
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
   
-  // Add timeout for Monaco loading
+  // Add timeout for Monaco loading (only on first load)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isLoading) {
-        console.warn('Monaco Editor loading timeout, falling back to textarea')
-        setMonacoError(true)
-        setIsLoading(false)
-      }
-    }, 10000) // 10 second timeout
-    
-    return () => clearTimeout(timer)
-  }, [isLoading])
+    if (!hasLoadedOnce) {
+      const timer = setTimeout(() => {
+        if (isLoading) {
+          setMonacoError(true)
+          setIsLoading(false)
+        }
+      }, 10000) // 10 second timeout
+      
+      return () => clearTimeout(timer)
+    }
+  }, [isLoading, hasLoadedOnce])
   
   const getLanguageSpecificOptions = () => {
     if (language === 'json') {
@@ -96,17 +111,21 @@ export const MonacoEditor = ({
   }
 
   const handleMonacoError = () => {
-    console.warn('Monaco Editor failed to load, falling back to textarea')
     setMonacoError(true)
   }
 
   const handleEditorMount = (editor: any, monaco: any) => {
     handleEditorDidMount(editor, monaco)
+    setEditorInstance(editor)
     setIsLoading(false)
+    setHasLoadedOnce(true)
   }
 
-  // Show loading state
-  if (isLoading && !monacoError) {
+  // Expose editor instance to parent via ref
+  useImperativeHandle(ref, () => editorInstance, [editorInstance])
+
+  // Show loading state only on first load
+  if (isLoading && !monacoError && !hasLoadedOnce) {
     return (
       <div className="relative h-full flex items-center justify-center">
         <div className="text-center">
@@ -180,4 +199,6 @@ export const MonacoEditor = ({
       />
     </div>
   )
-}
+})
+
+MonacoEditor.displayName = 'MonacoEditor'

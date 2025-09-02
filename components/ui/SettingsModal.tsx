@@ -23,7 +23,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
         onClose()
       }
     } catch (error) {
-      console.error('Failed to save settings:', error)
+      // Silently handle settings save errors
     } finally {
       setIsSubmitting(false)
     }
